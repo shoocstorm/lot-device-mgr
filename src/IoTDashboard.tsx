@@ -376,7 +376,7 @@ const ServerRack = ({ x, y, highlighted = false, alert = false }: { x: number; y
     >
       {alert && frame > 120 && (
         <Audio 
-          src={staticFile("alert-modern.mp3")} 
+          src={staticFile("freezer-hum-1.mp3")} 
           startFrom={0} 
           volume={0.5} 
         />
@@ -1187,7 +1187,7 @@ const SciFiAlertPopup = () => {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
   
-  const popupStartFrame = 250;
+  const popupStartFrame = 190;
   const appear = spring({
     frame: frame - popupStartFrame,
     fps,
@@ -1325,6 +1325,7 @@ export const IoTDashboard = () => {
 
   return (
     <AbsoluteFill className="bg-[#0a0a0f] text-white font-sans overflow-hidden">
+      <Audio src={staticFile("freezer-hum.mp3")} loop volume={0.3} />
       <div className="w-full h-full relative">
         {/* Background Glows */}
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[120%] h-[120%] bg-[radial-gradient(circle_at_center,rgba(37,99,235,0.05)_0%,transparent_70%)]" />

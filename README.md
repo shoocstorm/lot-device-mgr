@@ -1,54 +1,73 @@
-# Remotion video
+# IoT Device Manager - High-Tier Data Center Visualization
 
-<p align="center">
-  <a href="https://github.com/remotion-dev/logo">
-    <picture>
-      <source media="(prefers-color-scheme: dark)" srcset="https://github.com/remotion-dev/logo/raw/main/animated-logo-banner-dark.apng">
-      <img alt="Animated Remotion Logo" src="https://github.com/remotion-dev/logo/raw/main/animated-logo-banner-light.gif">
-    </picture>
-  </a>
-</p>
+A professional, high-fidelity data center visualization built with **Remotion**, **React**, and **Tailwind CSS**. This project creates a cinematic 3D dashboard experience for monitoring IoT devices in a server room environment, featuring dynamic camera animations, holographic data overlays, and automated alert sequences.
 
-Welcome to your Remotion project!
+![IoT Dashboard Preview](out.png)
 
-## Commands
+## 🚀 Features
 
-**Install Dependencies**
+- **Professional Data Center 3D Environment**:
+  - Detailed server racks with glass doors, LED indicators, and status bars.
+  - Realistic infrastructure: overhead cable trays, cooling vents, and structural wall panels.
+  - Enhanced floor decorations: aisle markers, warning strips, and maintenance indicators.
+- **Dynamic Cinematic Camera**:
+  - Smooth camera movements using Remotion springs.
+  - **Automated Alert Sequence**: Detects abnormal devices, zooms in for detailed inspection, and restores position.
+- **Holographic Data Overlays**:
+  - Real-time status indicators floating above server racks.
+  - Interactive HUD (Heads-Up Display) with system metrics and thermal sensors.
+- **Sci-Fi Alert System**:
+  - Critical overheat detection sequence.
+  - Cinematic pop-up display with detailed hardware metrics (CORE_TEMP, FAN_SPEED, etc.).
+  - Integrated system logs and emergency shutdown visualizations.
+- **Immersive Audio**:
+  - Ambient data center background hum.
+  - Localized alert sounds for critical events.
+- **Frosted Glass UI**:
+  - Modern sidebar and panels with backdrop blur and semi-transparent backgrounds.
 
-```console
-npm i
-```
+## 🛠️ Technology Stack
 
-**Start Preview**
+- **[Remotion](https://www.remotion.dev/)**: For programmatic video creation and animation.
+- **React**: Component-based UI architecture.
+- **Tailwind CSS**: For high-performance utility-first styling.
+- **Lucide React / SVG Icons**: For professional iconography.
 
-```console
+## 📦 Getting Started
+
+### Prerequisites
+
+- Node.js installed on your machine.
+- `npm` or `yarn` package manager.
+
+### Installation
+
+1. Clone the repository.
+2. Install dependencies:
+   ```bash
+   npm install
+   ```
+
+### Development
+
+Start the Remotion Studio to preview the dashboard and animations:
+```bash
 npm run dev
 ```
 
-**Render video**
+### Rendering
 
-```console
-npx remotion render
+To render the final visualization as an MP4 video:
+```bash
+npx remotion render src/index.ts IoTDashboard out.mp4
 ```
 
-**Upgrade Remotion**
+## 📂 Project Structure
 
-```console
-npx remotion upgrade
-```
+- `src/IoTDashboard.tsx`: Core component containing all 3D environment and UI logic.
+- `src/Root.tsx`: Remotion entry point and composition definitions.
+- `public/`: Assets including ambient sounds and textures.
 
-## Docs
+---
 
-Get started with Remotion by reading the [fundamentals page](https://www.remotion.dev/docs/the-fundamentals).
-
-## Help
-
-We provide help on our [Discord server](https://discord.gg/6VzzNDwUwV).
-
-## Issues
-
-Found an issue with Remotion? [File an issue here](https://github.com/remotion-dev/remotion/issues/new).
-
-## License
-
-Note that for some entities a company license is needed. [Read the terms here](https://github.com/remotion-dev/remotion/blob/main/LICENSE.md).
+*Built with ❤️ by the IoT Device Manager Team*
