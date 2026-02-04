@@ -12,6 +12,16 @@ const Sidebar = () => {
 
   const sidebarX = interpolate(slideIn, [0, 1], [-100, 0]);
 
+  const menuItems = [
+    { id: 1, icon: <path d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" /> }, // Home
+    { id: 2, icon: <path d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /> }, // Stats
+    { id: 3, icon: <path d="M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v4a2 2 0 00-2-2" /> }, // Server
+    { id: 4, icon: <path d="M12 11c0 3.517-1.009 6.799-2.753 9.571m-3.44-2.04l.054-.09A10.003 10.003 0 0012 21a9.994 9.994 0 007.454-3.344m-2.837-5.658V11a4 4 0 118 0v.171m-3.337 5.103l.066.102M12 11V9a4 4 0 10-8 0v2.171m3.337 5.103l-.066.102M12 11a4 4 0 11-8 0V9a4 4 0 118 0v2z" /> }, // Security
+    { id: 5, icon: <path d="M13 10V3L4 14h7v7l9-11h-7z" /> }, // Power/Energy
+    { id: 6, icon: <React.Fragment><path d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></React.Fragment> }, // Settings
+    { id: 7, icon: <path d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" /> }, // Logout
+  ];
+
   return (
     <div
       style={{
@@ -28,17 +38,21 @@ const Sidebar = () => {
         zIndex: 10,
       }}
     >
-      <div className="w-12 h-12 bg-blue-600 rounded-xl mb-12 flex items-center justify-center">
-        <div className="w-6 h-6 border-2 border-white rounded-full" />
+      <div className="w-12 h-12 bg-blue-600 rounded-xl mb-12 flex items-center justify-center shadow-lg shadow-blue-500/20">
+        <svg className="w-8 h-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+        </svg>
       </div>
-      {[1, 2, 3, 4, 5, 6, 7].map((i) => (
+      {menuItems.map((item) => (
         <div
-          key={i}
-          className={`w-12 h-12 rounded-xl mb-6 flex items-center justify-center ${
-            i === 6 ? 'bg-blue-600/30 border border-blue-500' : 'text-gray-400 hover:bg-white/10'
+          key={item.id}
+          className={`w-12 h-12 rounded-xl mb-6 flex items-center justify-center transition-all duration-300 ${
+            item.id === 6 ? 'bg-blue-600/30 border border-blue-500 text-blue-400' : 'text-gray-500 hover:bg-white/10 hover:text-white'
           }`}
         >
-          <div className={`w-6 h-6 border-2 ${i === 6 ? 'border-blue-400' : 'border-gray-500'} rounded`} />
+          <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            {item.icon}
+          </svg>
         </div>
       ))}
     </div>
@@ -668,22 +682,147 @@ const Floor = () => {
         }}
       />
 
-      {/* Subtle Tile Texture */}
+      {/* Subtle Tile Texture and Micro-scratches */}
       <div 
         style={{
           position: 'absolute',
           inset: 0,
-          opacity: 0.4,
-          backgroundImage: 'radial-gradient(rgba(255,255,255,0.02) 1px, transparent 1px)',
-          backgroundSize: '4px 4px',
+          opacity: 0.2,
+          backgroundImage: `
+            radial-gradient(rgba(255,255,255,0.05) 1px, transparent 1px),
+            repeating-linear-gradient(45deg, transparent, transparent 20px, rgba(255,255,255,0.01) 20px, rgba(255,255,255,0.01) 21px)
+          `,
+          backgroundSize: '4px 4px, 20px 20px',
         }}
       />
 
       {/* Floor Grid (Stronger structural lines for depth) */}
       {[...Array(40)].map((_, i) => (
         <React.Fragment key={i}>
-          <div style={{ position: 'absolute', left: i * 120, top: 0, bottom: 0, width: '1px', background: 'rgba(37, 99, 235, 0.08)' }} />
-          <div style={{ position: 'absolute', top: i * 120, left: 0, right: 0, height: '1px', background: 'rgba(37, 99, 235, 0.08)' }} />
+          <div style={{ position: 'absolute', left: i * 120, top: 0, bottom: 0, width: i % 5 === 0 ? '2px' : '1px', background: i % 5 === 0 ? 'rgba(37, 99, 235, 0.15)' : 'rgba(37, 99, 235, 0.08)' }} />
+          <div style={{ position: 'absolute', top: i * 120, left: 0, right: 0, height: i % 5 === 0 ? '2px' : '1px', background: i % 5 === 0 ? 'rgba(37, 99, 235, 0.15)' : 'rgba(37, 99, 235, 0.08)' }} />
+          
+          {/* Tile Corner Rivets */}
+          {[...Array(40)].map((_, j) => (
+            <div 
+              key={`rivet-${i}-${j}`}
+              style={{ 
+                position: 'absolute', 
+                left: i * 120 - 1, 
+                top: j * 120 - 1, 
+                width: '2px', 
+                height: '2px', 
+                background: '#1e293b',
+                borderRadius: '50%',
+                opacity: 0.5
+              }} 
+            />
+          ))}
+        </React.Fragment>
+      ))}
+
+      {/* Warning Strips for Rack Areas */}
+      {[...Array(3)].map((_, i) => (
+        <div
+          key={`warning-area-${i}`}
+          style={{
+            position: 'absolute',
+            left: 1000,
+            top: 2000 + (i - 1) * 300 - 60,
+            width: '2000px',
+            height: '120px',
+            background: 'rgba(239, 68, 68, 0.02)',
+            borderTop: '1px solid rgba(239, 68, 68, 0.1)',
+            borderBottom: '1px solid rgba(239, 68, 68, 0.1)',
+            pointerEvents: 'none',
+          }}
+        />
+      ))}
+
+      {/* Aisle Safety Markings & Numbers */}
+      {[...Array(5)].map((_, i) => {
+        const xPos = 2000 + (i - 2) * 400;
+        return (
+          <React.Fragment key={`aisle-${i}`}>
+            {/* Aisle Label */}
+            <div
+              style={{
+                position: 'absolute',
+                left: xPos,
+                top: 2100,
+                color: 'rgba(59, 130, 246, 0.2)',
+                fontSize: '40px',
+                fontWeight: 'bold',
+                fontFamily: 'monospace',
+                transform: 'rotate(-90deg)',
+                whiteSpace: 'nowrap',
+              }}
+            >
+              AISLE 0{i + 1}
+            </div>
+            {/* Ground Safety Boundaries */}
+            <div 
+              style={{
+                position: 'absolute',
+                left: xPos - 100,
+                top: 1500,
+                width: '200px',
+                height: '1000px',
+                border: '2px dashed rgba(59, 130, 246, 0.05)',
+                pointerEvents: 'none',
+              }}
+            />
+            {/* Aisle Entrance Markers */}
+            <div 
+              style={{
+                position: 'absolute',
+                left: xPos - 10,
+                top: 1500,
+                width: '20px',
+                height: '4px',
+                background: '#3b82f6',
+                boxShadow: '0 0 10px #3b82f6',
+                opacity: 0.3
+              }}
+            />
+          </React.Fragment>
+        );
+      })}
+
+      {/* Hazard Strips near Rack Rows */}
+      {[-2, 0, 2].map((rowY) => (
+        <React.Fragment key={`hazard-group-${rowY}`}>
+          <div
+            style={{
+              position: 'absolute',
+              left: 1000,
+              top: 2000 + rowY * 100 + 50,
+              width: '2000px',
+              height: '4px',
+              background: 'repeating-linear-gradient(90deg, #fbbf24, #fbbf24 10px, #000 10px, #000 20px)',
+              opacity: 0.25,
+            }}
+          />
+          {/* Floor maintenance indicators */}
+          <div
+            style={{
+              position: 'absolute',
+              left: 1500 + rowY * 100,
+              top: 2000 + rowY * 100,
+              width: '80px',
+              height: '80px',
+              border: '1px solid rgba(59, 130, 246, 0.1)',
+              background: 'rgba(59, 130, 246, 0.02)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: 'rgba(59, 130, 246, 0.2)',
+              fontSize: '10px',
+              fontFamily: 'monospace'
+            }}
+          >
+            SEC_{rowY + 3}
+          </div>
         </React.Fragment>
       ))}
 
@@ -1044,6 +1183,138 @@ const LightLeak = () => {
   );
 };
 
+const SciFiAlertPopup = () => {
+  const frame = useCurrentFrame();
+  const { fps } = useVideoConfig();
+  
+  const popupStartFrame = 250;
+  const appear = spring({
+    frame: frame - popupStartFrame,
+    fps,
+    config: { damping: 12, stiffness: 100 },
+  });
+
+  const contentSlide = spring({
+    frame: frame - popupStartFrame - 10,
+    fps,
+  });
+
+  if (frame < popupStartFrame) return null;
+
+  return (
+    <div
+      style={{
+        position: 'absolute',
+        inset: 0,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        zIndex: 100,
+        pointerEvents: 'none',
+        background: `rgba(2, 6, 23, ${interpolate(appear, [0, 1], [0, 0.4])})`,
+        backdropFilter: `blur(${interpolate(appear, [0, 1], [0, 8])}px)`,
+      }}
+    >
+      <div
+        style={{
+          width: '800px',
+          height: '500px',
+          background: 'rgba(15, 23, 42, 0.8)',
+          border: '1px solid rgba(239, 68, 68, 0.5)',
+          borderRadius: '24px',
+          padding: '40px',
+          transform: `scale(${interpolate(appear, [0, 1], [0.8, 1])})`,
+          opacity: appear,
+          boxShadow: '0 0 50px rgba(239, 68, 68, 0.2), inset 0 0 30px rgba(239, 68, 68, 0.1)',
+          display: 'flex',
+          flexDirection: 'column',
+          position: 'relative',
+          overflow: 'hidden',
+        }}
+      >
+        {/* Animated Scanline for Popup */}
+        <div 
+          style={{
+            position: 'absolute',
+            top: (frame * 3) % 500,
+            left: 0,
+            right: 0,
+            height: '1px',
+            background: 'rgba(239, 68, 68, 0.2)',
+            zIndex: 1,
+          }}
+        />
+
+        {/* Header */}
+        <div className="flex justify-between items-start mb-12" style={{ transform: `translateY(${interpolate(contentSlide, [0, 1], [20, 0])}px)`, opacity: contentSlide }}>
+          <div>
+            <div className="text-red-500 font-bold text-sm tracking-[0.2em] uppercase mb-2">Security Breach / Hardware Failure</div>
+            <h2 className="text-white text-4xl font-black">NODE_ALERT: #582-X</h2>
+          </div>
+          <div className="px-4 py-2 border border-red-500 text-red-500 font-mono text-xs rounded-md animate-pulse">
+            CRITICAL_OVERHEAT
+          </div>
+        </div>
+
+        {/* Main Content Area */}
+        <div className="flex gap-12 flex-1" style={{ transform: `translateY(${interpolate(contentSlide, [0, 1], [40, 0])}px)`, opacity: contentSlide }}>
+          {/* Left Side: Visual Representation */}
+          <div className="w-1/3 flex flex-col gap-6">
+            <div className="aspect-square bg-red-500/10 border border-red-500/20 rounded-2xl flex items-center justify-center relative overflow-hidden">
+              <svg className="w-24 h-24 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z" />
+              </svg>
+              {/* Spinning Ring */}
+              <div 
+                className="absolute inset-4 border-2 border-red-500/20 border-t-red-500/60 rounded-full"
+                style={{ transform: `rotate(${frame * 5}deg)` }}
+              />
+            </div>
+            <div className="space-y-2">
+              <div className="text-[10px] text-gray-500 font-mono">LOCATION_ID</div>
+              <div className="text-white font-mono">SERVER_ROOM_B / RACK_05 / U21</div>
+            </div>
+          </div>
+
+          {/* Right Side: Data Metrics */}
+          <div className="flex-1 space-y-8">
+            <div className="grid grid-cols-2 gap-6">
+              {[
+                { label: 'CORE_TEMP', value: '98.4', unit: '°C', status: 'DANGER' },
+                { label: 'FAN_SPEED', value: '0', unit: 'RPM', status: 'FAULT' },
+                { label: 'VOLTAGE', value: '1.42', unit: 'V', status: 'STABLE' },
+                { label: 'LOAD_IDX', value: '94.2', unit: '%', status: 'HIGH' },
+              ].map((stat, i) => (
+                <div key={i} className="bg-white/5 p-4 rounded-xl border border-white/10">
+                  <div className="text-[10px] text-gray-500 font-mono mb-1">{stat.label}</div>
+                  <div className="flex items-baseline gap-2">
+                    <span className={`text-2xl font-bold ${stat.status === 'DANGER' ? 'text-red-500' : 'text-white'}`}>{stat.value}</span>
+                    <span className="text-[10px] text-gray-400">{stat.unit}</span>
+                  </div>
+                  <div className={`text-[8px] font-bold mt-2 ${stat.status === 'DANGER' ? 'text-red-500' : 'text-blue-400'}`}>
+                    {stat.status}
+                  </div>
+                </div>
+              ))}
+            </div>
+            
+            {/* System Log */}
+            <div className="bg-black/40 p-4 rounded-xl border border-white/5 font-mono text-[10px] space-y-1">
+              <div className="text-red-500">[11:24:52] ALERT: Thermal threshold exceeded</div>
+              <div className="text-red-500">[11:24:55] ERROR: Cooling fan #2 failure detected</div>
+              <div className="text-gray-500">[11:24:58] INFO: Initiating emergency shutdown sequence...</div>
+              <div className="text-blue-400">[11:25:01] SYS: Rerouting critical traffic to Node #583</div>
+            </div>
+          </div>
+        </div>
+
+        {/* Bottom Deco */}
+        <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-transparent via-red-500 to-transparent opacity-50" />
+      </div>
+    </div>
+  );
+};
+
 export const IoTDashboard = () => {
   const frame = useCurrentFrame();
   const [showHUD, setShowHUD] = useState(false);
@@ -1067,6 +1338,7 @@ export const IoTDashboard = () => {
         <TopBar onToggleHUD={toggleHUD} />
         <LeftPanel />
         <RightPanel />
+        <SciFiAlertPopup />
       </div>
     </AbsoluteFill>
   );
