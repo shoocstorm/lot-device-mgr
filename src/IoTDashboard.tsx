@@ -1,5 +1,5 @@
 import React from 'react';
-import { AbsoluteFill, interpolate, spring, useCurrentFrame, useVideoConfig } from 'remotion';
+import { AbsoluteFill, Audio, interpolate, spring, staticFile, useCurrentFrame, useVideoConfig } from 'remotion';
 
 const Sidebar = () => {
   const frame = useCurrentFrame();
@@ -89,7 +89,13 @@ const TopBar = () => {
         <div className="flex items-center gap-2">
           <span>28°C</span>
         </div>
-        <div className="w-10 h-10 bg-red-500/20 border border-red-500/50 rounded-full flex items-center justify-center relative">
+        <div 
+          className="w-10 h-10 bg-red-500/20 border border-red-500/50 rounded-full flex items-center justify-center relative"
+          style={{
+            boxShadow: `0 0 ${interpolate(Math.sin(frame / 5), [-1, 1], [5, 20])}px rgba(239, 68, 68, 0.5)`,
+            animation: 'pulse 1s infinite',
+          }}
+        >
           <div className="w-2 h-2 bg-red-500 rounded-full absolute top-2 right-2 animate-pulse" />
           <div className="w-5 h-5 border-2 border-red-400 rounded-full" />
         </div>
@@ -273,132 +279,510 @@ const RightPanel = () => {
   );
 };
 
-const ServerRack = ({ x, y, z, highlighted = false, alert = false }: { x: number; y: number; z: number; highlighted?: boolean; alert?: boolean }) => {
+const HolographicData = ({ x, y, title, value, unit, color = '#3b82f6' }: { x: number; y: number; title: string; value: string; unit?: string; color?: string }) => {
+  const frame = useCurrentFrame();
+  const { fps } = useVideoConfig();
+  const float = Math.sin(frame / 15) * 5;
+  
+  const appear = spring({
+    frame: frame - 100 - (x + y) * 2,
+    fps,
+    config: { damping: 15 },
+  });
+
+  return (
+    <div
+      style={{
+        position: 'absolute',
+        transform: `translate3d(${x * 80 + 20}px, ${-180 + float}px, ${y * 80}px) scale(${appear})`,
+        opacity: appear * 0.8,
+        transformStyle: 'preserve-3d',
+        pointerEvents: 'none',
+      }}
+    >
+      <div
+        style={{
+          background: 'rgba(15, 23, 42, 0.4)',
+          backdropFilter: 'blur(4px)',
+          border: `1px solid ${color}44`,
+          padding: '8px 12px',
+          borderRadius: '4px',
+          minWidth: '100px',
+          boxShadow: `0 0 20px ${color}22`,
+        }}
+      >
+        <div style={{ color: color, fontSize: '10px', textTransform: 'uppercase', fontWeight: 'bold', marginBottom: '2px' }}>{title}</div>
+        <div className="flex items-baseline gap-1">
+          <div style={{ color: 'white', fontSize: '16px', fontWeight: 'bold' }}>{value}</div>
+          <div style={{ color: color, fontSize: '10px' }}>{unit}</div>
+        </div>
+        {/* Decorative lines */}
+        <div style={{ position: 'absolute', bottom: -20, left: '50%', width: '1px', height: '20px', background: `linear-gradient(to bottom, ${color}aa, transparent)` }} />
+      </div>
+    </div>
+  );
+};
+
+const ServerRack = ({ x, y, highlighted = false, alert = false }: { x: number; y: number; highlighted?: boolean; alert?: boolean }) => {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
   
   const appear = spring({
     frame: frame - 60 - (x + y) * 2,
     fps,
-    config: { damping: 10 },
+    config: { damping: 12, stiffness: 100 },
   });
 
   const flicker = Math.sin(frame / 5) * 0.1 + 0.9;
+  const alertPulse = alert ? Math.sin(frame / 10) * 0.5 + 0.5 : 0;
+  
+  // Data flow light effect
+  const lightTrailPos = (frame * 2) % 120;
+  
+  const rackWidth = 40;
+  const rackHeight = 120;
+  const rackDepth = 40;
 
   return (
     <div
       style={{
         position: 'absolute',
-        left: 400 + x * 60 - y * 60,
-        top: 300 + x * 30 + y * 30 - z * 80,
-        width: 50,
-        height: 80,
-        transform: `scale(${appear})`,
-        opacity: appear,
+        transformStyle: 'preserve-3d',
+        transform: `translate3d(${x * 80}px, 0, ${y * 80}px) scaleY(${appear})`,
+        opacity: Math.min(1, appear * 2),
       }}
     >
-      {/* Rack Body */}
+      {alert && frame > 120 && (
+        <Audio 
+          src={staticFile("alert-modern.mp3")} 
+          startFrom={0} 
+          volume={0.5} 
+        />
+      )}
+      {/* Alert Glow Box */}
+      {alert && (
+        <div
+          style={{
+            position: 'absolute',
+            width: rackWidth + 20,
+            height: rackHeight + 20,
+            background: 'rgba(239, 68, 68, 0.3)',
+            filter: 'blur(20px)',
+            transform: `translate3d(-10px, ${-rackHeight - 10}px, 0)`,
+            opacity: alertPulse,
+          }}
+        />
+      )}
+      {/* Front Face */}
       <div
         style={{
-          width: '100%',
-          height: '100%',
+          position: 'absolute',
+          width: rackWidth,
+          height: rackHeight,
           background: highlighted ? '#3b82f6' : '#1e293b',
-          boxShadow: highlighted ? '0 0 40px rgba(59, 130, 246, 0.5)' : 'none',
-          borderRadius: 4,
           border: '1px solid rgba(255, 255, 255, 0.1)',
-          position: 'relative',
-          overflow: 'hidden',
+          transform: `translate3d(0, ${-rackHeight}px, ${rackDepth / 2}px)`,
+          display: 'flex',
+          flexDirection: 'column',
+          padding: '4px',
+          boxShadow: highlighted ? '0 0 40px rgba(59, 130, 246, 0.6)' : 'none',
         }}
       >
-        {/* Rack Lights */}
-        {[...Array(6)].map((_, i) => (
+        {[...Array(8)].map((_, i) => (
           <div
             key={i}
-            className={`w-full h-0.5 my-2 ${highlighted ? 'bg-white/50' : 'bg-blue-500/30'}`}
+            className={`w-full h-1.5 my-1 ${highlighted ? 'bg-white/40' : 'bg-blue-500/20'}`}
             style={{ opacity: highlighted ? 1 : flicker }}
           />
         ))}
-        
-        {/* Status Indicators */}
-        <div className="absolute bottom-2 left-2 flex gap-1">
-          <div className={`w-1 h-1 rounded-full ${alert ? 'bg-red-500 animate-pulse' : 'bg-green-500'}`} />
-          <div className="w-1 h-1 bg-blue-500 rounded-full" />
+        <div className="mt-auto flex gap-1">
+          <div className={`w-2 h-2 rounded-full ${alert ? 'bg-red-500 animate-pulse' : 'bg-green-500'}`} />
+          <div className="w-2 h-2 bg-blue-400 rounded-full" />
         </div>
+        
+        {/* Animated Light Trail */}
+        <div
+          style={{
+            position: 'absolute',
+            top: lightTrailPos,
+            left: 0,
+            right: 0,
+            height: '20px',
+            background: `linear-gradient(to bottom, transparent, ${highlighted ? '#60a5fa' : '#3b82f6'}44, transparent)`,
+            pointerEvents: 'none',
+          }}
+        />
       </div>
 
-      {/* Alert Tooltip */}
+      {/* Back Face */}
+      <div
+        style={{
+          position: 'absolute',
+          width: rackWidth,
+          height: rackHeight,
+          background: '#0f172a',
+          transform: `translate3d(0, ${-rackHeight}px, ${-rackDepth / 2}px) rotateY(180deg)`,
+        }}
+      />
+
+      {/* Left Face */}
+      <div
+        style={{
+          position: 'absolute',
+          width: rackDepth,
+          height: rackHeight,
+          background: highlighted ? '#2563eb' : '#0f172a',
+          transform: `translate3d(${-rackDepth / 2}px, ${-rackHeight}px, 0) rotateY(-90deg)`,
+          border: '1px solid rgba(255, 255, 255, 0.05)',
+        }}
+      />
+
+      {/* Right Face */}
+      <div
+        style={{
+          position: 'absolute',
+          width: rackDepth,
+          height: rackHeight,
+          background: highlighted ? '#2563eb' : '#0f172a',
+          transform: `translate3d(${rackWidth - rackDepth / 2}px, ${-rackHeight}px, 0) rotateY(90deg)`,
+          border: '1px solid rgba(255, 255, 255, 0.05)',
+        }}
+      />
+
+      {/* Top Face */}
+      <div
+        style={{
+          position: 'absolute',
+          width: rackWidth,
+          height: rackDepth,
+          background: highlighted ? '#60a5fa' : '#334155',
+          transform: `translate3d(0, ${-rackHeight - rackDepth / 2}px, 0) rotateX(90deg)`,
+        }}
+      />
+
+      {/* Alert Tooltip (facing camera) */}
       {alert && frame > 120 && (
         <div
           style={{
             position: 'absolute',
-            top: -60,
-            left: '50%',
-            transform: `translateX(-50%) scale(${spring({ frame: frame - 120, fps })})`,
+            top: -rackHeight - 40,
+            left: rackWidth / 2,
+            transform: `translate3d(-50%, 0, 20px) scale(${spring({ frame: frame - 120, fps })})`,
             background: 'rgba(239, 68, 68, 0.9)',
             padding: '8px 12px',
             borderRadius: 8,
             whiteSpace: 'nowrap',
-            zIndex: 20,
-            boxShadow: '0 4px 12px rgba(0,0,0,0.5)',
+            zIndex: 100,
           }}
         >
           <div className="text-white text-xs font-bold flex items-center gap-2">
-            <div className="w-4 h-4 bg-white/20 rounded-full flex items-center justify-center">!</div>
             Abnormal temperature
           </div>
-          <div 
-            style={{
-              position: 'absolute',
-              bottom: -6,
-              left: '50%',
-              transform: 'translateX(-50%)',
-              borderLeft: '6px solid transparent',
-              borderRight: '6px solid transparent',
-              borderTop: '6px solid rgba(239, 68, 68, 0.9)',
-            }}
-          />
         </div>
       )}
     </div>
   );
 };
 
-const ServerRoom = () => {
+const Ceiling = () => {
   return (
-    <div className="absolute inset-0 pointer-events-none">
-      <div 
-        className="relative w-full h-full"
+    <div
+      style={{
+        position: 'absolute',
+        width: 4000,
+        height: 4000,
+        background: `
+          linear-gradient(rgba(37, 99, 235, 0.03) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(37, 99, 235, 0.03) 1px, transparent 1px),
+          #050510
+        `,
+        backgroundSize: '160px 160px',
+        transform: 'translate3d(-2000px, -400px, -2000px) rotateX(90deg)',
+        zIndex: -1,
+      }}
+    >
+      {/* Overhead lights */}
+      {[...Array(5)].map((_, i) => (
+        <div
+          key={i}
+          style={{
+            position: 'absolute',
+            left: 1800 + i * 100,
+            top: 1500,
+            width: '2px',
+            height: '1000px',
+            background: 'linear-gradient(to bottom, #3b82f6, transparent)',
+            boxShadow: '0 0 20px #3b82f6',
+            opacity: 0.2,
+          }}
+        />
+      ))}
+    </div>
+  );
+};
+
+const Cables = () => {
+  const frame = useCurrentFrame();
+  return (
+    <div style={{ transformStyle: 'preserve-3d' }}>
+      {[...Array(6)].map((_, i) => {
+        const x = (i - 3) * 150;
+        const z = -300;
+        const swing = Math.sin(frame / 20 + i) * 2;
+        return (
+          <div
+            key={i}
+            style={{
+              position: 'absolute',
+              width: '4px',
+              height: '300px',
+              background: '#1e293b',
+              transform: `translate3d(${x}px, -400px, ${z}px) rotateZ(${swing}deg)`,
+              borderLeft: '1px solid rgba(255,255,255,0.1)',
+            }}
+          >
+            {/* Glowing connectors */}
+            <div
+              style={{
+                position: 'absolute',
+                bottom: 0,
+                width: '8px',
+                height: '8px',
+                left: '-2px',
+                background: '#3b82f6',
+                borderRadius: '50%',
+                boxShadow: '0 0 10px #3b82f6',
+              }}
+            />
+          </div>
+        );
+      })}
+    </div>
+  );
+};
+
+const Floor = () => {
+  return (
+    <div
+      style={{
+        position: 'absolute',
+        width: 4000,
+        height: 4000,
+        background: `
+          linear-gradient(rgba(37, 99, 235, 0.05) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(37, 99, 235, 0.05) 1px, transparent 1px),
+          #050510
+        `,
+        backgroundSize: '80px 80px',
+        transform: 'translate3d(-2000px, 0, -2000px) rotateX(90deg)',
+        zIndex: -1,
+      }}
+    />
+  );
+};
+
+const FloatingHUD = ({ alert = false }: { alert?: boolean }) => {
+  const frame = useCurrentFrame();
+  const float = Math.sin(frame / 30) * 10;
+  const themeColor = alert ? '#ef4444' : '#3b82f6';
+  
+  return (
+    <div
+      style={{
+        position: 'absolute',
+        transform: `translate3d(-500px, -250px, 100px) rotateY(30deg)`,
+        transformStyle: 'preserve-3d',
+        pointerEvents: 'none',
+        opacity: alert ? interpolate(Math.sin(frame / 10), [-1, 1], [0.6, 1]) : 0.8,
+      }}
+    >
+      <div
         style={{
-          transform: 'scale(1.2) translateY(50px)',
+          width: '400px',
+          height: '250px',
+          background: alert ? 'rgba(239, 68, 68, 0.1)' : 'rgba(37, 99, 235, 0.05)',
+          backdropFilter: 'blur(8px)',
+          border: `1px solid ${themeColor}66`,
+          borderRadius: '12px',
+          padding: '20px',
+          transform: `translateY(${float}px)`,
+          boxShadow: `0 0 30px ${themeColor}22`,
         }}
       >
-        {/* Left Block */}
-        {[...Array(6)].map((_, x) => (
-          [...Array(4)].map((_, y) => (
-            <ServerRack 
-              key={`left-${x}-${y}`} 
-              x={x} 
-              y={y + 8} 
-              z={0} 
-              highlighted={x === 2 && y === 1}
-            />
-          ))
-        ))}
-        
-        {/* Right Block */}
-        {[...Array(8)].map((_, x) => (
-          [...Array(6)].map((_, y) => (
-            <ServerRack 
-              key={`right-${x}-${y}`} 
-              x={x + 8} 
-              y={y} 
-              z={0} 
-              alert={x === 3 && y === 2}
-            />
-          ))
-        ))}
+        <div 
+          style={{ color: themeColor }}
+          className="text-[10px] font-bold uppercase mb-4 tracking-widest flex items-center gap-2"
+        >
+          {alert && <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse" />}
+          {alert ? 'Critical Alert: System Overheat' : 'Mainframe Status'}
+        </div>
+        <div className="space-y-4">
+          {[1, 2, 3].map(i => (
+            <div key={i} className="space-y-1">
+              <div 
+                className="flex justify-between text-[10px]"
+                style={{ color: alert ? '#fca5a5' : '#93c5fd' }}
+              >
+                <span>{alert ? `Thermal Sensor 0${i}` : `Core Module 0${i}`}</span>
+                <span>{alert ? (90 + i * 2) : (80 + i * 5)}%</span>
+              </div>
+              <div 
+                className="h-1 rounded-full overflow-hidden"
+                style={{ background: alert ? 'rgba(153, 27, 27, 0.3)' : 'rgba(30, 58, 138, 0.3)' }}
+              >
+                <div 
+                  className="h-full" 
+                  style={{ 
+                    width: `${interpolate(frame, [0, 100], [0, alert ? (90 + i * 2) : (80 + i * 5)])}%`,
+                    background: themeColor,
+                    opacity: 0.6
+                  }} 
+                />
+              </div>
+            </div>
+          ))}
+        </div>
+        {/* Animated grid background inside HUD */}
+        <div 
+          style={{
+            position: 'absolute',
+            inset: 0,
+            backgroundImage: `radial-gradient(circle, ${themeColor}33 1px, transparent 1px)`,
+            backgroundSize: '10px 10px',
+            opacity: 0.5,
+            zIndex: -1,
+          }}
+        />
       </div>
     </div>
+  );
+};
+
+const Particles = () => {
+  return (
+    <div style={{ transformStyle: 'preserve-3d' }}>
+      {[...Array(30)].map((_, i) => {
+        const x = (Math.random() - 0.5) * 2000;
+        const y = (Math.random() - 0.5) * 800;
+        const z = (Math.random() - 0.5) * 2000;
+        return (
+          <div
+            key={i}
+            style={{
+              position: 'absolute',
+              width: '2px',
+              height: '2px',
+              background: '#3b82f6',
+              borderRadius: '50%',
+              transform: `translate3d(${x}px, ${y}px, ${z}px)`,
+              opacity: 0.2,
+              boxShadow: '0 0 5px #3b82f6',
+            }}
+          />
+        );
+      })}
+    </div>
+  );
+};
+
+const ServerRoom = () => {
+  const frame = useCurrentFrame();
+  const cameraRotateY = interpolate(frame, [0, 300], [-35, -25]);
+  const cameraRotateX = -25;
+  const cameraZ = interpolate(frame, [0, 300], [0, 100]);
+  
+  const glitch = frame > 120 && frame < 130 && Math.random() > 0.5;
+
+  return (
+    <div 
+      className="absolute inset-0 flex items-center justify-center"
+      style={{
+        perspective: '1200px',
+        filter: glitch ? 'hue-rotate(90deg) contrast(1.5)' : 'none',
+        transform: glitch ? `translate(${Math.random() * 5}px, ${Math.random() * 5}px)` : 'none',
+      }}
+    >
+      <div
+        style={{
+          transformStyle: 'preserve-3d',
+          transform: `rotateX(${cameraRotateX}deg) rotateY(${cameraRotateY}deg) translate3d(0, 150px, ${cameraZ}px)`,
+        }}
+      >
+        <Ceiling />
+        <Floor />
+        <Cables />
+        <Particles />
+        {frame > 120 && <FloatingHUD alert />}
+        
+        {/* Background Walls */}
+        <div
+          style={{
+            position: 'absolute',
+            width: 4000,
+            height: 1000,
+            background: '#050510',
+            borderBottom: '2px solid rgba(59, 130, 246, 0.2)',
+            transform: 'translate3d(-2000px, -400px, -1000px)',
+            zIndex: -2,
+          }}
+        >
+          {/* Glowing conduit on wall */}
+          <div style={{ position: 'absolute', bottom: 100, left: 0, right: 0, height: '2px', background: '#3b82f6', boxShadow: '0 0 20px #3b82f6', opacity: 0.3 }} />
+        </div>
+
+        {/* Row 1 */}
+        {[...Array(10)].map((_, i) => (
+          <React.Fragment key={`r1-group-${i}`}>
+            <ServerRack x={i - 4} y={-2} highlighted={i === 3} />
+            {i === 3 && <HolographicData x={i - 4} y={-2} title="System Load" value="84" unit="%" />}
+          </React.Fragment>
+        ))}
+        
+        {/* Row 2 */}
+        {[...Array(10)].map((_, i) => (
+          <React.Fragment key={`r2-group-${i}`}>
+            <ServerRack x={i - 4} y={0} alert={i === 5} />
+            {i === 5 && <HolographicData x={i - 4} y={0} title="Temp Critical" value="42" unit="°C" color="#ef4444" />}
+            {i === 1 && <HolographicData x={i - 4} y={0} title="Network" value="1.2" unit="Gbps" color="#10b981" />}
+          </React.Fragment>
+        ))}
+        
+        {/* Row 3 */}
+        {[...Array(10)].map((_, i) => (
+          <ServerRack key={`r3-${i}`} x={i - 4} y={2} />
+        ))}
+
+        {/* Environmental Glow */}
+        <div
+          style={{
+            position: 'absolute',
+            width: 1200,
+            height: 1200,
+            background: 'radial-gradient(circle, rgba(37, 99, 235, 0.1) 0%, transparent 70%)',
+            transform: 'translate3d(-600px, 0, -600px) rotateX(90deg)',
+            pointerEvents: 'none',
+          }}
+        />
+      </div>
+    </div>
+  );
+};
+
+const CRTGrid = () => {
+  return (
+    <div
+      style={{
+        position: 'absolute',
+        inset: 0,
+        background: `
+          linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%),
+          linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06))
+        `,
+        backgroundSize: '100% 4px, 3px 100%',
+        pointerEvents: 'none',
+        zIndex: 100,
+      }}
+    />
   );
 };
 
@@ -465,6 +849,7 @@ export const IoTDashboard = () => {
         
         <LightLeak />
         <ScanLine />
+        <CRTGrid />
         
         <ServerRoom />
         
