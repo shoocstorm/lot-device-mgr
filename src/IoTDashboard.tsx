@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useCallback } from 'react';
 import { AbsoluteFill, Audio, interpolate, spring, staticFile, useCurrentFrame, useVideoConfig } from 'remotion';
 
 const Sidebar = () => {
@@ -45,7 +45,7 @@ const Sidebar = () => {
   );
 };
 
-const TopBar = () => {
+const TopBar = ({ onToggleHUD }: { onToggleHUD: () => void }) => {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
   const fadeIn = spring({
@@ -89,16 +89,18 @@ const TopBar = () => {
         <div className="flex items-center gap-2">
           <span>28°C</span>
         </div>
-        <div 
-          className="w-10 h-10 bg-red-500/20 border border-red-500/50 rounded-full flex items-center justify-center relative"
+        <button 
+          onClick={onToggleHUD}
+          className="w-10 h-10 bg-red-500/20 border border-red-500/50 rounded-full flex items-center justify-center relative hover:bg-red-500/30 transition-colors cursor-pointer"
           style={{
             boxShadow: `0 0 ${interpolate(Math.sin(frame / 5), [-1, 1], [5, 20])}px rgba(239, 68, 68, 0.5)`,
             animation: 'pulse 1s infinite',
+            outline: 'none',
           }}
         >
           <div className="w-2 h-2 bg-red-500 rounded-full absolute top-2 right-2 animate-pulse" />
           <div className="w-5 h-5 border-2 border-red-400 rounded-full" />
-        </div>
+        </button>
       </div>
     </div>
   );
@@ -491,16 +493,18 @@ const Ceiling = () => {
         position: 'absolute',
         width: 4000,
         height: 4000,
-        background: `
-          linear-gradient(rgba(37, 99, 235, 0.03) 1px, transparent 1px),
-          linear-gradient(90deg, rgba(37, 99, 235, 0.03) 1px, transparent 1px),
-          #050510
-        `,
-        backgroundSize: '160px 160px',
+        background: '#050510',
         transform: 'translate3d(-2000px, -400px, -2000px) rotateX(90deg)',
         zIndex: -1,
       }}
     >
+      {/* Structural grid lines (Solid) */}
+      {[...Array(20)].map((_, i) => (
+        <React.Fragment key={i}>
+          <div style={{ position: 'absolute', left: i * 200, top: 0, bottom: 0, width: '1px', background: 'rgba(37, 99, 235, 0.05)' }} />
+          <div style={{ position: 'absolute', top: i * 200, left: 0, right: 0, height: '1px', background: 'rgba(37, 99, 235, 0.05)' }} />
+        </React.Fragment>
+      ))}
       {/* Overhead lights */}
       {[...Array(5)].map((_, i) => (
         <div
@@ -568,16 +572,44 @@ const Floor = () => {
         position: 'absolute',
         width: 4000,
         height: 4000,
-        background: `
-          linear-gradient(rgba(37, 99, 235, 0.05) 1px, transparent 1px),
-          linear-gradient(90deg, rgba(37, 99, 235, 0.05) 1px, transparent 1px),
-          #050510
-        `,
-        backgroundSize: '80px 80px',
+        background: '#0a0a14',
         transform: 'translate3d(-2000px, 0, -2000px) rotateX(90deg)',
         zIndex: -1,
+        boxShadow: 'inset 0 0 100px rgba(0,0,0,0.5)',
       }}
-    />
+    >
+      {/* Polished Concrete / Raised Tile Texture */}
+      <div 
+        style={{
+          position: 'absolute',
+          inset: 0,
+          backgroundImage: `
+            linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px),
+            radial-gradient(circle at center, rgba(37, 99, 235, 0.05) 0%, transparent 80%)
+          `,
+          backgroundSize: '100px 100px, 100px 100px, 100% 100%',
+        }}
+      />
+
+      {/* Floor Grid (Subtle Structural lines) */}
+      {[...Array(40)].map((_, i) => (
+        <React.Fragment key={i}>
+          <div style={{ position: 'absolute', left: i * 100, top: 0, bottom: 0, width: '1px', background: 'rgba(37, 99, 235, 0.12)', boxShadow: '0 0 5px rgba(37,99,235,0.2)' }} />
+          <div style={{ position: 'absolute', top: i * 100, left: 0, right: 0, height: '1px', background: 'rgba(37, 99, 235, 0.12)', boxShadow: '0 0 5px rgba(37,99,235,0.2)' }} />
+        </React.Fragment>
+      ))}
+
+      {/* Reflection / Specular Highlights */}
+      <div 
+        style={{
+          position: 'absolute',
+          inset: 0,
+          background: 'linear-gradient(135deg, rgba(255,255,255,0.03) 0%, transparent 50%, rgba(255,255,255,0.03) 100%)',
+          pointerEvents: 'none',
+        }}
+      />
+    </div>
   );
 };
 
@@ -685,7 +717,7 @@ const Particles = () => {
   );
 };
 
-const ServerRoom = () => {
+const ServerRoom = ({ showHUD }: { showHUD: boolean }) => {
   const frame = useCurrentFrame();
   const cameraRotateY = interpolate(frame, [0, 300], [-35, -25]);
   const cameraRotateX = -25;
@@ -712,22 +744,73 @@ const ServerRoom = () => {
         <Floor />
         <Cables />
         <Particles />
-        {frame > 120 && <FloatingHUD alert />}
+        {showHUD && <FloatingHUD alert />}
         
-        {/* Background Walls */}
+        {/* Background Wall (Rear) */}
         <div
           style={{
             position: 'absolute',
             width: 4000,
-            height: 1000,
-            background: '#050510',
-            borderBottom: '2px solid rgba(59, 130, 246, 0.2)',
-            transform: 'translate3d(-2000px, -400px, -1000px)',
+            height: 1200,
+            background: 'linear-gradient(to bottom, #050510, #0a0a14)',
+            transform: 'translate3d(-2000px, -600px, -1000px)',
+            zIndex: -2,
+            borderBottom: '1px solid rgba(59, 130, 246, 0.2)',
+          }}
+        >
+          {/* Structural Wall Panels */}
+          {[...Array(10)].map((_, i) => (
+            <div
+              key={i}
+              style={{
+                position: 'absolute',
+                left: i * 400,
+                top: 0,
+                bottom: 0,
+                width: '398px',
+                borderRight: '2px solid rgba(0,0,0,0.3)',
+                background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.01))',
+              }}
+            >
+              {/* Horizontal detail lines */}
+              <div style={{ position: 'absolute', top: '20%', left: 0, right: 0, height: '1px', background: 'rgba(255,255,255,0.02)' }} />
+              <div style={{ position: 'absolute', top: '60%', left: 0, right: 0, height: '1px', background: 'rgba(255,255,255,0.02)' }} />
+              
+              {/* Status light on panel */}
+              <div style={{ position: 'absolute', top: '15%', left: '10%', width: '4px', height: '4px', borderRadius: '50%', background: '#3b82f6', opacity: 0.3, boxShadow: '0 0 10px #3b82f6' }} />
+            </div>
+          ))}
+
+          {/* Glowing conduit on wall */}
+          <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: '4px', background: 'rgba(59, 130, 246, 0.1)', boxShadow: '0 0 20px rgba(59, 130, 246, 0.2)' }} />
+        </div>
+
+        {/* Side Wall (Left) */}
+        <div
+          style={{
+            position: 'absolute',
+            width: 2000,
+            height: 1200,
+            background: '#070712',
+            transform: 'translate3d(-2000px, -600px, 0) rotateY(90deg)',
             zIndex: -2,
           }}
         >
-          {/* Glowing conduit on wall */}
-          <div style={{ position: 'absolute', bottom: 100, left: 0, right: 0, height: '2px', background: '#3b82f6', boxShadow: '0 0 20px #3b82f6', opacity: 0.3 }} />
+          <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, transparent, rgba(0,0,0,0.5))' }} />
+        </div>
+
+        {/* Side Wall (Right) */}
+        <div
+          style={{
+            position: 'absolute',
+            width: 2000,
+            height: 1200,
+            background: '#070712',
+            transform: 'translate3d(2000px, -600px, 0) rotateY(-90deg)',
+            zIndex: -2,
+          }}
+        >
+          <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, transparent, rgba(0,0,0,0.5))' }} />
         </div>
 
         {/* Row 1 */}
@@ -765,24 +848,6 @@ const ServerRoom = () => {
         />
       </div>
     </div>
-  );
-};
-
-const CRTGrid = () => {
-  return (
-    <div
-      style={{
-        position: 'absolute',
-        inset: 0,
-        background: `
-          linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%),
-          linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06))
-        `,
-        backgroundSize: '100% 4px, 3px 100%',
-        pointerEvents: 'none',
-        zIndex: 100,
-      }}
-    />
   );
 };
 
@@ -832,29 +897,25 @@ const LightLeak = () => {
 
 export const IoTDashboard = () => {
   const frame = useCurrentFrame();
+  const [showHUD, setShowHUD] = useState(false);
   
-  const panX = interpolate(frame, [0, 300], [0, -20]);
+  const toggleHUD = useCallback(() => {
+    setShowHUD((prev) => !prev);
+  }, []);
 
   return (
     <AbsoluteFill className="bg-[#0a0a0f] text-white font-sans overflow-hidden">
-      <div
-        style={{
-          width: '100%',
-          height: '100%',
-          transform: ` translateX(${panX}px)`,
-        }}
-      >
+      <div className="w-full h-full relative">
         {/* Background Glows */}
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[120%] h-[120%] bg-[radial-gradient(circle_at_center,rgba(37,99,235,0.05)_0%,transparent_70%)]" />
         
         <LightLeak />
         <ScanLine />
-        <CRTGrid />
         
-        <ServerRoom />
+        <ServerRoom showHUD={showHUD} />
         
         <Sidebar />
-        <TopBar />
+        <TopBar onToggleHUD={toggleHUD} />
         <LeftPanel />
         <RightPanel />
       </div>
