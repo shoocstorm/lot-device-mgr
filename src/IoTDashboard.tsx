@@ -169,6 +169,12 @@ const LeftPanel = () => {
         transform: `translateX(${interpolate(slideIn, [0, 1], [-50, 0])}px)`,
         opacity: slideIn,
         zIndex: 10,
+        background: 'rgba(15, 23, 42, 0.4)',
+        backdropFilter: 'blur(12px)',
+        padding: '24px',
+        borderRadius: '20px',
+        border: '1px solid rgba(255, 255, 255, 0.05)',
+        boxShadow: '0 20px 50px rgba(0,0,0,0.3)',
       }}
     >
       <div className="flex gap-4">
@@ -341,16 +347,16 @@ const ServerRack = ({ x, y, highlighted = false, alert = false }: { x: number; y
   // Data flow light effect
   const lightTrailPos = (frame * 2) % 120;
   
-  const rackWidth = 40;
-  const rackHeight = 120;
-  const rackDepth = 40;
+  const rackWidth = 44;
+  const rackHeight = 140;
+  const rackDepth = 44;
 
   return (
     <div
       style={{
         position: 'absolute',
         transformStyle: 'preserve-3d',
-        transform: `translate3d(${x * 80}px, 0, ${y * 80}px) scaleY(${appear})`,
+        transform: `translate3d(${x * 90}px, 0, ${y * 100}px) scaleY(${appear})`,
         opacity: Math.min(1, appear * 2),
       }}
     >
@@ -366,56 +372,105 @@ const ServerRack = ({ x, y, highlighted = false, alert = false }: { x: number; y
         <div
           style={{
             position: 'absolute',
-            width: rackWidth + 20,
-            height: rackHeight + 20,
-            background: 'rgba(239, 68, 68, 0.3)',
-            filter: 'blur(20px)',
-            transform: `translate3d(-10px, ${-rackHeight - 10}px, 0)`,
+            width: rackWidth + 40,
+            height: rackHeight + 40,
+            background: 'rgba(239, 68, 68, 0.4)',
+            filter: 'blur(30px)',
+            transform: `translate3d(-20px, ${-rackHeight - 20}px, 0)`,
             opacity: alertPulse,
           }}
         />
       )}
-      {/* Front Face */}
+      
+      {/* Rack Main Body */}
+      {/* Front Face - Premium Glass/Perforated Look */}
       <div
         style={{
           position: 'absolute',
           width: rackWidth,
           height: rackHeight,
-          background: highlighted ? '#3b82f6' : '#1e293b',
-          border: '1px solid rgba(255, 255, 255, 0.1)',
+          background: '#0f172a',
+          border: '2px solid #334155',
           transform: `translate3d(0, ${-rackHeight}px, ${rackDepth / 2}px)`,
           display: 'flex',
           flexDirection: 'column',
-          padding: '4px',
-          boxShadow: highlighted ? '0 0 40px rgba(59, 130, 246, 0.6)' : 'none',
+          padding: '2px',
+          boxShadow: highlighted ? '0 0 40px rgba(59, 130, 246, 0.4)' : 'inset 0 0 20px rgba(0,0,0,0.8)',
+          overflow: 'hidden',
         }}
       >
-        {[...Array(8)].map((_, i) => (
-          <div
-            key={i}
-            className={`w-full h-1.5 my-1 ${highlighted ? 'bg-white/40' : 'bg-blue-500/20'}`}
-            style={{ opacity: highlighted ? 1 : flicker }}
-          />
-        ))}
-        <div className="mt-auto flex gap-1">
-          <div className={`w-2 h-2 rounded-full ${alert ? 'bg-red-500 animate-pulse' : 'bg-green-500'}`} />
-          <div className="w-2 h-2 bg-blue-400 rounded-full" />
+        {/* Internal Units */}
+        <div className="flex-1 flex flex-col gap-[2px]">
+          {[...Array(12)].map((_, i) => (
+            <div
+              key={i}
+              style={{
+                width: '100%',
+                height: '8px',
+                background: '#1e293b',
+                borderBottom: '1px solid rgba(0,0,0,0.3)',
+                position: 'relative',
+                display: 'flex',
+                alignItems: 'center',
+                padding: '0 4px',
+              }}
+            >
+              {/* LED Indicators */}
+              <div className="flex gap-1">
+                <div 
+                  style={{ 
+                    width: '2px', 
+                    height: '2px', 
+                    borderRadius: '50%', 
+                    background: alert && i < 3 ? '#ef4444' : (Math.random() > 0.3 ? '#10b981' : '#059669'),
+                    boxShadow: (alert && i < 3) ? '0 0 4px #ef4444' : 'none',
+                    opacity: flicker 
+                  }} 
+                />
+                <div style={{ width: '2px', height: '2px', borderRadius: '50%', background: '#3b82f6', opacity: Math.random() * 0.5 }} />
+              </div>
+              
+              {/* Unit Detail */}
+              <div style={{ marginLeft: 'auto', width: '12px', height: '1px', background: 'rgba(255,255,255,0.05)' }} />
+            </div>
+          ))}
+        </div>
+
+        {/* Glass Overlay */}
+        <div
+          style={{
+            position: 'absolute',
+            inset: 0,
+            background: 'linear-gradient(135deg, rgba(255,255,255,0.1) 0%, transparent 40%, rgba(255,255,255,0.05) 100%)',
+            border: '1px solid rgba(255,255,255,0.1)',
+            pointerEvents: 'none',
+          }}
+        />
+
+        {/* Status Bar at Bottom */}
+        <div className="h-4 flex items-center px-2 justify-between bg-black/40">
+          <div className="flex gap-1">
+            <div className={`w-1.5 h-1.5 rounded-full ${alert ? 'bg-red-500 animate-pulse' : 'bg-green-500'}`} style={{ boxShadow: alert ? '0 0 8px #ef4444' : '0 0 4px #22c55e' }} />
+            <div className="w-1.5 h-1.5 bg-blue-500/50 rounded-full" />
+          </div>
+          <div className="text-[6px] text-gray-500 font-mono">U{Math.floor(42 - (y * 2 + x))}</div>
         </div>
         
-        {/* Animated Light Trail */}
+        {/* Scanning Light Effect */}
         <div
           style={{
             position: 'absolute',
             top: lightTrailPos,
             left: 0,
             right: 0,
-            height: '20px',
-            background: `linear-gradient(to bottom, transparent, ${highlighted ? '#60a5fa' : '#3b82f6'}44, transparent)`,
+            height: '30px',
+            background: `linear-gradient(to bottom, transparent, ${alert ? 'rgba(239, 68, 68, 0.1)' : 'rgba(59, 130, 246, 0.1)'}, transparent)`,
             pointerEvents: 'none',
           }}
         />
       </div>
 
+      {/* Side Faces with Metal Texture */}
       {/* Back Face */}
       <div
         style={{
@@ -424,6 +479,7 @@ const ServerRack = ({ x, y, highlighted = false, alert = false }: { x: number; y
           height: rackHeight,
           background: '#0f172a',
           transform: `translate3d(0, ${-rackHeight}px, ${-rackDepth / 2}px) rotateY(180deg)`,
+          border: '1px solid #1e293b',
         }}
       />
 
@@ -433,9 +489,10 @@ const ServerRack = ({ x, y, highlighted = false, alert = false }: { x: number; y
           position: 'absolute',
           width: rackDepth,
           height: rackHeight,
-          background: highlighted ? '#2563eb' : '#0f172a',
+          background: '#111827',
           transform: `translate3d(${-rackDepth / 2}px, ${-rackHeight}px, 0) rotateY(-90deg)`,
-          border: '1px solid rgba(255, 255, 255, 0.05)',
+          border: '1px solid #1e293b',
+          backgroundImage: 'linear-gradient(90deg, transparent 95%, rgba(0,0,0,0.3) 100%)',
         }}
       />
 
@@ -445,9 +502,10 @@ const ServerRack = ({ x, y, highlighted = false, alert = false }: { x: number; y
           position: 'absolute',
           width: rackDepth,
           height: rackHeight,
-          background: highlighted ? '#2563eb' : '#0f172a',
+          background: '#111827',
           transform: `translate3d(${rackWidth - rackDepth / 2}px, ${-rackHeight}px, 0) rotateY(90deg)`,
-          border: '1px solid rgba(255, 255, 255, 0.05)',
+          border: '1px solid #1e293b',
+          backgroundImage: 'linear-gradient(-90deg, transparent 95%, rgba(0,0,0,0.3) 100%)',
         }}
       />
 
@@ -457,29 +515,37 @@ const ServerRack = ({ x, y, highlighted = false, alert = false }: { x: number; y
           position: 'absolute',
           width: rackWidth,
           height: rackDepth,
-          background: highlighted ? '#60a5fa' : '#334155',
+          background: '#1e293b',
           transform: `translate3d(0, ${-rackHeight - rackDepth / 2}px, 0) rotateX(90deg)`,
+          border: '1px solid #334155',
+          boxShadow: 'inset 0 0 10px rgba(0,0,0,0.5)',
         }}
       />
 
-      {/* Alert Tooltip (facing camera) */}
+      {/* Alert Tooltip */}
       {alert && frame > 120 && (
         <div
           style={{
             position: 'absolute',
-            top: -rackHeight - 40,
+            top: -rackHeight - 60,
             left: rackWidth / 2,
-            transform: `translate3d(-50%, 0, 20px) scale(${spring({ frame: frame - 120, fps })})`,
-            background: 'rgba(239, 68, 68, 0.9)',
-            padding: '8px 12px',
-            borderRadius: 8,
+            transform: `translate3d(-50%, 0, 40px) scale(${spring({ frame: frame - 120, fps })})`,
+            background: 'rgba(239, 68, 68, 0.95)',
+            backdropFilter: 'blur(4px)',
+            padding: '10px 16px',
+            borderRadius: 4,
             whiteSpace: 'nowrap',
             zIndex: 100,
+            border: '1px solid rgba(255,255,255,0.2)',
+            boxShadow: '0 10px 30px rgba(239, 68, 68, 0.4)',
           }}
         >
-          <div className="text-white text-xs font-bold flex items-center gap-2">
-            Abnormal temperature
+          <div className="text-white text-xs font-bold flex flex-col items-center">
+            <span className="text-[10px] uppercase opacity-70 mb-1">Status Alert</span>
+            <span className="text-sm tracking-tight">CRITICAL OVERHEAT</span>
           </div>
+          {/* Arrow */}
+          <div style={{ position: 'absolute', bottom: -8, left: '50%', transform: 'translateX(-50%)', borderLeft: '8px solid transparent', borderRight: '8px solid transparent', borderTop: '8px solid rgba(239, 68, 68, 0.95)' }} />
         </div>
       )}
     </div>
@@ -493,31 +559,42 @@ const Ceiling = () => {
         position: 'absolute',
         width: 4000,
         height: 4000,
-        background: '#050510',
-        transform: 'translate3d(-2000px, -400px, -2000px) rotateX(90deg)',
+        background: '#020205',
+        transform: 'translate3d(-2000px, -450px, -2000px) rotateX(90deg)',
         zIndex: -1,
       }}
     >
       {/* Structural grid lines (Solid) */}
       {[...Array(20)].map((_, i) => (
         <React.Fragment key={i}>
-          <div style={{ position: 'absolute', left: i * 200, top: 0, bottom: 0, width: '1px', background: 'rgba(37, 99, 235, 0.05)' }} />
-          <div style={{ position: 'absolute', top: i * 200, left: 0, right: 0, height: '1px', background: 'rgba(37, 99, 235, 0.05)' }} />
+          <div style={{ position: 'absolute', left: i * 200, top: 0, bottom: 0, width: '2px', background: 'rgba(0,0,0,0.5)' }} />
+          <div style={{ position: 'absolute', top: i * 200, left: 0, right: 0, height: '2px', background: 'rgba(0,0,0,0.5)' }} />
         </React.Fragment>
       ))}
-      {/* Overhead lights */}
-      {[...Array(5)].map((_, i) => (
+      
+      {/* Recessed panels */}
+      <div 
+        style={{
+          position: 'absolute',
+          inset: 0,
+          backgroundImage: 'radial-gradient(rgba(37, 99, 235, 0.03) 1px, transparent 1px)',
+          backgroundSize: '40px 40px',
+        }}
+      />
+
+      {/* Overhead lights - more subtle and professional */}
+      {[...Array(8)].map((_, i) => (
         <div
           key={i}
           style={{
             position: 'absolute',
-            left: 1800 + i * 100,
-            top: 1500,
-            width: '2px',
-            height: '1000px',
-            background: 'linear-gradient(to bottom, #3b82f6, transparent)',
-            boxShadow: '0 0 20px #3b82f6',
-            opacity: 0.2,
+            left: 1000 + i * 300,
+            top: 1000,
+            width: '4px',
+            height: '2000px',
+            background: 'linear-gradient(to bottom, #1e3a8a, transparent)',
+            boxShadow: '0 0 30px rgba(30, 58, 138, 0.3)',
+            opacity: 0.1,
           }}
         />
       ))}
@@ -572,40 +649,60 @@ const Floor = () => {
         position: 'absolute',
         width: 4000,
         height: 4000,
-        background: '#0a0a14',
+        background: '#050508',
         transform: 'translate3d(-2000px, 0, -2000px) rotateX(90deg)',
         zIndex: -1,
-        boxShadow: 'inset 0 0 100px rgba(0,0,0,0.5)',
+        boxShadow: 'inset 0 0 100px rgba(0,0,0,0.8)',
       }}
     >
-      {/* Polished Concrete / Raised Tile Texture */}
+      {/* High-tier Raised Floor Tiles */}
       <div 
         style={{
           position: 'absolute',
           inset: 0,
           backgroundImage: `
-            linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px),
-            linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px),
-            radial-gradient(circle at center, rgba(37, 99, 235, 0.05) 0%, transparent 80%)
+            linear-gradient(rgba(255,255,255,0.01) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(255,255,255,0.01) 1px, transparent 1px)
           `,
-          backgroundSize: '100px 100px, 100px 100px, 100% 100%',
+          backgroundSize: '120px 120px',
         }}
       />
 
-      {/* Floor Grid (Subtle Structural lines) */}
-      {[...Array(40)].map((_, i) => (
-        <React.Fragment key={i}>
-          <div style={{ position: 'absolute', left: i * 100, top: 0, bottom: 0, width: '1px', background: 'rgba(37, 99, 235, 0.12)', boxShadow: '0 0 5px rgba(37,99,235,0.2)' }} />
-          <div style={{ position: 'absolute', top: i * 100, left: 0, right: 0, height: '1px', background: 'rgba(37, 99, 235, 0.12)', boxShadow: '0 0 5px rgba(37,99,235,0.2)' }} />
-        </React.Fragment>
-      ))}
-
-      {/* Reflection / Specular Highlights */}
+      {/* Subtle Tile Texture */}
       <div 
         style={{
           position: 'absolute',
           inset: 0,
-          background: 'linear-gradient(135deg, rgba(255,255,255,0.03) 0%, transparent 50%, rgba(255,255,255,0.03) 100%)',
+          opacity: 0.4,
+          backgroundImage: 'radial-gradient(rgba(255,255,255,0.02) 1px, transparent 1px)',
+          backgroundSize: '4px 4px',
+        }}
+      />
+
+      {/* Floor Grid (Stronger structural lines for depth) */}
+      {[...Array(40)].map((_, i) => (
+        <React.Fragment key={i}>
+          <div style={{ position: 'absolute', left: i * 120, top: 0, bottom: 0, width: '1px', background: 'rgba(37, 99, 235, 0.08)' }} />
+          <div style={{ position: 'absolute', top: i * 120, left: 0, right: 0, height: '1px', background: 'rgba(37, 99, 235, 0.08)' }} />
+        </React.Fragment>
+      ))}
+
+      {/* Reflection / Specular Highlights - More pronounced for "polished" look */}
+      <div 
+        style={{
+          position: 'absolute',
+          inset: 0,
+          background: 'linear-gradient(135deg, rgba(37, 99, 235, 0.05) 0%, transparent 40%, rgba(37, 99, 235, 0.05) 100%)',
+          pointerEvents: 'none',
+        }}
+      />
+      
+      {/* Light spots from server racks */}
+      <div 
+        style={{
+          position: 'absolute',
+          inset: 0,
+          background: 'radial-gradient(circle at center, rgba(37, 99, 235, 0.03) 0%, transparent 70%)',
           pointerEvents: 'none',
         }}
       />
@@ -719,32 +816,102 @@ const Particles = () => {
 
 const ServerRoom = ({ showHUD }: { showHUD: boolean }) => {
   const frame = useCurrentFrame();
-  const cameraRotateY = interpolate(frame, [0, 300], [-35, -25]);
-  const cameraRotateX = -25;
-  const cameraZ = interpolate(frame, [0, 300], [0, 100]);
+  const { fps } = useVideoConfig();
   
-  const glitch = frame > 120 && frame < 130 && Math.random() > 0.5;
+  // Alert state timing
+  const alertStartFrame = 120;
+  const zoomDuration = 90; // 3 seconds at 30fps
+  const restoreStartFrame = alertStartFrame + zoomDuration;
+  
+  const isAlertActive = frame > alertStartFrame;
+  
+  // Spring for smooth camera transition
+  const zoomInSpring = spring({
+    frame: frame - alertStartFrame,
+    fps,
+    config: { damping: 20, stiffness: 60 },
+  });
+
+  const zoomOutSpring = spring({
+    frame: frame - restoreStartFrame,
+    fps,
+    config: { damping: 20, stiffness: 40 },
+  });
+
+  // Combine springs for zoom cycle
+  const zoomProgress = interpolate(
+    zoomOutSpring,
+    [0, 1],
+    [zoomInSpring, 0]
+  );
+
+  // Camera Base Values
+  const baseRotateY = interpolate(frame, [0, 300], [-35, -25]);
+  const baseRotateX = -25;
+  const baseTranslateY = 150;
+  const baseTranslateX = 0;
+  const baseZ = interpolate(frame, [0, 300], [0, 100]);
+
+  // Target values for zoom-in (focusing on the alert rack at x=1, y=0)
+  const targetRotateY = -10;
+  const targetRotateX = -15;
+  const targetTranslateX = -90; 
+  const targetTranslateY = 100;  
+  const targetZ = 600;          
+
+  // Interpolated Camera Values
+  const cameraRotateY = interpolate(zoomProgress, [0, 1], [baseRotateY, targetRotateY]);
+  const cameraRotateX = interpolate(zoomProgress, [0, 1], [baseRotateX, targetRotateX]);
+  const translateX = interpolate(zoomProgress, [0, 1], [baseTranslateX, targetTranslateX]);
+  const translateY = interpolate(zoomProgress, [0, 1], [baseTranslateY, targetTranslateY]);
+  const cameraZ = interpolate(zoomProgress, [0, 1], [baseZ, targetZ]);
+  
+  const glitch = isAlertActive && frame < alertStartFrame + 10 && Math.random() > 0.5;
 
   return (
     <div 
       className="absolute inset-0 flex items-center justify-center"
       style={{
         perspective: '1200px',
-        filter: glitch ? 'hue-rotate(90deg) contrast(1.5)' : 'none',
-        transform: glitch ? `translate(${Math.random() * 5}px, ${Math.random() * 5}px)` : 'none',
+        filter: glitch ? 'hue-rotate(90deg) contrast(1.5) blur(2px)' : 'none',
+        transform: glitch ? `translate(${Math.random() * 10}px, ${Math.random() * 10}px)` : 'none',
       }}
     >
       <div
         style={{
           transformStyle: 'preserve-3d',
-          transform: `rotateX(${cameraRotateX}deg) rotateY(${cameraRotateY}deg) translate3d(0, 150px, ${cameraZ}px)`,
+          transform: `rotateX(${cameraRotateX}deg) rotateY(${cameraRotateY}deg) translate3d(${translateX}px, ${translateY}px, ${cameraZ}px)`,
         }}
       >
         <Ceiling />
         <Floor />
+        
+        {/* Overhead Cable Trays - Adding for more professional look */}
+        {[...Array(3)].map((_, i) => (
+          <div
+            key={`tray-${i}`}
+            style={{
+              position: 'absolute',
+              width: 4000,
+              height: 20,
+              background: '#1e293b',
+              border: '1px solid #334155',
+              transform: `translate3d(-2000px, -380px, ${(i - 1) * 400}px)`,
+              boxShadow: '0 10px 20px rgba(0,0,0,0.5)',
+            }}
+          >
+            {/* Cable details in tray */}
+            <div style={{ position: 'absolute', inset: '4px', display: 'flex', gap: '4px' }}>
+              {[...Array(10)].map((_, j) => (
+                <div key={j} style={{ flex: 1, height: '100%', background: j % 2 === 0 ? '#3b82f6' : '#1e293b', opacity: 0.3 }} />
+              ))}
+            </div>
+          </div>
+        ))}
+
         <Cables />
         <Particles />
-        {showHUD && <FloatingHUD alert />}
+        {showHUD && <FloatingHUD alert={isAlertActive} />}
         
         {/* Background Wall (Rear) */}
         <div
@@ -752,72 +919,42 @@ const ServerRoom = ({ showHUD }: { showHUD: boolean }) => {
             position: 'absolute',
             width: 4000,
             height: 1200,
-            background: 'linear-gradient(to bottom, #050510, #0a0a14)',
-            transform: 'translate3d(-2000px, -600px, -1000px)',
+            background: 'linear-gradient(to bottom, #020205, #0a0a14)',
+            transform: 'translate3d(-2000px, -600px, -1200px)',
             zIndex: -2,
             borderBottom: '1px solid rgba(59, 130, 246, 0.2)',
           }}
         >
           {/* Structural Wall Panels */}
-          {[...Array(10)].map((_, i) => (
+          {[...Array(12)].map((_, i) => (
             <div
               key={i}
               style={{
                 position: 'absolute',
-                left: i * 400,
+                left: i * 350,
                 top: 0,
                 bottom: 0,
-                width: '398px',
-                borderRight: '2px solid rgba(0,0,0,0.3)',
-                background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.01))',
+                width: '348px',
+                borderRight: '2px solid rgba(0,0,0,0.5)',
+                background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.02))',
               }}
             >
-              {/* Horizontal detail lines */}
-              <div style={{ position: 'absolute', top: '20%', left: 0, right: 0, height: '1px', background: 'rgba(255,255,255,0.02)' }} />
-              <div style={{ position: 'absolute', top: '60%', left: 0, right: 0, height: '1px', background: 'rgba(255,255,255,0.02)' }} />
-              
-              {/* Status light on panel */}
-              <div style={{ position: 'absolute', top: '15%', left: '10%', width: '4px', height: '4px', borderRadius: '50%', background: '#3b82f6', opacity: 0.3, boxShadow: '0 0 10px #3b82f6' }} />
+              {/* Vertical cooling vents on wall */}
+              <div style={{ position: 'absolute', top: '30%', right: '10%', width: '40px', height: '200px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                {[...Array(10)].map((_, j) => (
+                  <div key={j} style={{ width: '100%', height: '2px', background: 'rgba(0,0,0,0.5)' }} />
+                ))}
+              </div>
             </div>
           ))}
-
-          {/* Glowing conduit on wall */}
-          <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: '4px', background: 'rgba(59, 130, 246, 0.1)', boxShadow: '0 0 20px rgba(59, 130, 246, 0.2)' }} />
         </div>
 
-        {/* Side Wall (Left) */}
-        <div
-          style={{
-            position: 'absolute',
-            width: 2000,
-            height: 1200,
-            background: '#070712',
-            transform: 'translate3d(-2000px, -600px, 0) rotateY(90deg)',
-            zIndex: -2,
-          }}
-        >
-          <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, transparent, rgba(0,0,0,0.5))' }} />
-        </div>
-
-        {/* Side Wall (Right) */}
-        <div
-          style={{
-            position: 'absolute',
-            width: 2000,
-            height: 1200,
-            background: '#070712',
-            transform: 'translate3d(2000px, -600px, 0) rotateY(-90deg)',
-            zIndex: -2,
-          }}
-        >
-          <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, transparent, rgba(0,0,0,0.5))' }} />
-        </div>
-
+        {/* Rows of Racks */}
         {/* Row 1 */}
         {[...Array(10)].map((_, i) => (
           <React.Fragment key={`r1-group-${i}`}>
             <ServerRack x={i - 4} y={-2} highlighted={i === 3} />
-            {i === 3 && <HolographicData x={i - 4} y={-2} title="System Load" value="84" unit="%" />}
+            {i === 3 && !isAlertActive && <HolographicData x={i - 4} y={-2} title="System Load" value="84" unit="%" />}
           </React.Fragment>
         ))}
         
@@ -825,8 +962,17 @@ const ServerRoom = ({ showHUD }: { showHUD: boolean }) => {
         {[...Array(10)].map((_, i) => (
           <React.Fragment key={`r2-group-${i}`}>
             <ServerRack x={i - 4} y={0} alert={i === 5} />
-            {i === 5 && <HolographicData x={i - 4} y={0} title="Temp Critical" value="42" unit="°C" color="#ef4444" />}
-            {i === 1 && <HolographicData x={i - 4} y={0} title="Network" value="1.2" unit="Gbps" color="#10b981" />}
+            {i === 5 && isAlertActive && (
+              <HolographicData 
+                x={i - 4} 
+                y={0} 
+                title="Node #582 - Critical" 
+                value="98.4" 
+                unit="°C" 
+                color="#ef4444" 
+              />
+            )}
+            {i === 1 && !isAlertActive && <HolographicData x={i - 4} y={0} title="Network" value="1.2" unit="Gbps" color="#10b981" />}
           </React.Fragment>
         ))}
         
@@ -835,15 +981,18 @@ const ServerRoom = ({ showHUD }: { showHUD: boolean }) => {
           <ServerRack key={`r3-${i}`} x={i - 4} y={2} />
         ))}
 
-        {/* Environmental Glow */}
+        {/* Dynamic environmental lighting */}
         <div
           style={{
             position: 'absolute',
-            width: 1200,
-            height: 1200,
-            background: 'radial-gradient(circle, rgba(37, 99, 235, 0.1) 0%, transparent 70%)',
-            transform: 'translate3d(-600px, 0, -600px) rotateX(90deg)',
+            width: 2000,
+            height: 2000,
+            background: isAlertActive 
+              ? 'radial-gradient(circle, rgba(239, 68, 68, 0.15) 0%, transparent 70%)' 
+              : 'radial-gradient(circle, rgba(37, 99, 235, 0.1) 0%, transparent 70%)',
+            transform: 'translate3d(-1000px, 0, -1000px) rotateX(90deg)',
             pointerEvents: 'none',
+            transition: 'background 0.5s ease',
           }}
         />
       </div>
