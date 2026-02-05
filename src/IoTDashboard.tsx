@@ -345,18 +345,22 @@ const HolographicData = ({ x, y, title, value, unit, color = '#3b82f6' }: { x: n
   );
 };
 
-const ServerRack = ({ x, y, highlighted = false, alert = false }: { x: number; y: number; highlighted?: boolean; alert?: boolean }) => {
+const ServerRack = ({ x, y, highlighted = false, alert = false, systemStatus = 'alert' }: { x: number; y: number; highlighted?: boolean; alert?: boolean; systemStatus?: 'alert' | 'restarting' | 'normal' }) => {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
   
+  const isActuallyAlert = alert && systemStatus === 'alert';
+  const isRestarting = systemStatus === 'restarting';
+  const isNormal = systemStatus === 'normal';
+
   const appear = spring({
     frame: frame - 60 - (x + y) * 2,
     fps,
     config: { damping: 12, stiffness: 100 },
   });
 
-  const flicker = Math.sin(frame / 5) * 0.1 + 0.9;
-  const alertPulse = alert ? Math.sin(frame / 10) * 0.5 + 0.5 : 0;
+  const flicker = isRestarting ? 0.1 : (Math.sin(frame / 5) * 0.1 + 0.9);
+  const alertPulse = isActuallyAlert ? Math.sin(frame / 10) * 0.5 + 0.5 : 0;
   
   // Data flow light effect
   const lightTrailPos = (frame * 2) % 120;
@@ -374,7 +378,7 @@ const ServerRack = ({ x, y, highlighted = false, alert = false }: { x: number; y
         opacity: Math.min(1, appear * 2),
       }}
     >
-      {alert && frame > 120 && (
+      {isActuallyAlert && frame > 120 && (
         <Audio 
           src={staticFile("alert.mp3")} 
           startFrom={0} 
@@ -384,7 +388,7 @@ const ServerRack = ({ x, y, highlighted = false, alert = false }: { x: number; y
       )}
       
       {/* Alert Glow Box */}
-      {alert && (
+      {isActuallyAlert && (
         <div
           style={{
             position: 'absolute',
@@ -405,14 +409,15 @@ const ServerRack = ({ x, y, highlighted = false, alert = false }: { x: number; y
           position: 'absolute',
           width: rackWidth,
           height: rackHeight,
-          background: '#0f172a',
-          border: '2px solid #334155',
+          background: isRestarting ? '#020617' : '#0f172a',
+          border: `2px solid ${isActuallyAlert ? '#ef4444' : (isNormal ? '#10b981' : '#334155')}`,
           transform: `translate3d(0, ${-rackHeight}px, ${rackDepth / 2}px)`,
           display: 'flex',
           flexDirection: 'column',
           padding: '2px',
-          boxShadow: highlighted ? '0 0 40px rgba(59, 130, 246, 0.4)' : 'inset 0 0 20px rgba(0,0,0,0.8)',
+          boxShadow: highlighted ? '0 0 40px rgba(59, 130, 246, 0.4)' : (isActuallyAlert ? '0 0 20px rgba(239, 68, 68, 0.3)' : (isNormal ? '0 0 20px rgba(16, 185, 129, 0.2)' : 'inset 0 0 20px rgba(0,0,0,0.8)')),
           overflow: 'hidden',
+          transition: 'all 0.5s ease',
         }}
       >
         {/* Internal Units */}
@@ -423,7 +428,7 @@ const ServerRack = ({ x, y, highlighted = false, alert = false }: { x: number; y
               style={{
                 width: '100%',
                 height: '8px',
-                background: '#1e293b',
+                background: isRestarting ? '#0f172a' : '#1e293b',
                 borderBottom: '1px solid rgba(0,0,0,0.3)',
                 position: 'relative',
                 display: 'flex',
@@ -438,12 +443,12 @@ const ServerRack = ({ x, y, highlighted = false, alert = false }: { x: number; y
                     width: '2px', 
                     height: '2px', 
                     borderRadius: '50%', 
-                    background: alert && i < 3 ? '#ef4444' : (Math.random() > 0.3 ? '#10b981' : '#059669'),
-                    boxShadow: (alert && i < 3) ? '0 0 4px #ef4444' : 'none',
-                    opacity: flicker 
+                    background: isRestarting ? '#1e293b' : (isActuallyAlert && i < 3 ? '#ef4444' : (isNormal || Math.random() > 0.3 ? '#10b981' : '#059669')),
+                    boxShadow: (isActuallyAlert && i < 3) ? '0 0 4px #ef4444' : (isNormal ? '0 0 4px #10b981' : 'none'),
+                    opacity: isRestarting ? 0.2 : flicker 
                   }} 
                 />
-                <div style={{ width: '2px', height: '2px', borderRadius: '50%', background: '#3b82f6', opacity: Math.random() * 0.5 }} />
+                <div style={{ width: '2px', height: '2px', borderRadius: '50%', background: isRestarting ? 'transparent' : '#3b82f6', opacity: Math.random() * 0.5 }} />
               </div>
               
               {/* Unit Detail */}
@@ -466,7 +471,7 @@ const ServerRack = ({ x, y, highlighted = false, alert = false }: { x: number; y
         {/* Status Bar at Bottom */}
         <div className="h-4 flex items-center px-2 justify-between bg-black/40">
           <div className="flex gap-1">
-            <div className={`w-1.5 h-1.5 rounded-full ${alert ? 'bg-red-500 animate-pulse' : 'bg-green-500'}`} style={{ boxShadow: alert ? '0 0 8px #ef4444' : '0 0 4px #22c55e' }} />
+            <div className={`w-1.5 h-1.5 rounded-full ${isActuallyAlert ? 'bg-red-500 animate-pulse' : (isNormal ? 'bg-green-500' : (isRestarting ? 'bg-gray-800' : 'bg-green-500'))}`} style={{ boxShadow: isActuallyAlert ? '0 0 8px #ef4444' : (isNormal ? '0 0 4px #22c55e' : 'none') }} />
             <div className="w-1.5 h-1.5 bg-blue-500/50 rounded-full" />
           </div>
           <div className="text-[6px] text-gray-500 font-mono">U{Math.floor(42 - (y * 2 + x))}</div>
@@ -480,7 +485,7 @@ const ServerRack = ({ x, y, highlighted = false, alert = false }: { x: number; y
             left: 0,
             right: 0,
             height: '30px',
-            background: `linear-gradient(to bottom, transparent, ${alert ? 'rgba(239, 68, 68, 0.1)' : 'rgba(59, 130, 246, 0.1)'}, transparent)`,
+            background: `linear-gradient(to bottom, transparent, ${isActuallyAlert ? 'rgba(239, 68, 68, 0.1)' : (isNormal ? 'rgba(16, 185, 129, 0.1)' : 'rgba(59, 130, 246, 0.1)')}, transparent)`,
             pointerEvents: 'none',
           }}
         />
@@ -539,29 +544,29 @@ const ServerRack = ({ x, y, highlighted = false, alert = false }: { x: number; y
       />
 
       {/* Alert Tooltip */}
-      {alert && frame > 120 && (
+      {alert && systemStatus !== 'normal' && frame > 120 && (
         <div
           style={{
             position: 'absolute',
             top: -rackHeight - 60,
             left: rackWidth / 2,
             transform: `translate3d(-50%, 0, 40px) scale(${spring({ frame: frame - 120, fps })})`,
-            background: 'rgba(239, 68, 68, 0.95)',
+            background: isRestarting ? 'rgba(59, 130, 246, 0.95)' : 'rgba(239, 68, 68, 0.95)',
             backdropFilter: 'blur(4px)',
             padding: '10px 16px',
             borderRadius: 4,
             whiteSpace: 'nowrap',
             zIndex: 100,
             border: '1px solid rgba(255,255,255,0.2)',
-            boxShadow: '0 10px 30px rgba(239, 68, 68, 0.4)',
+            boxShadow: isRestarting ? '0 10px 30px rgba(59, 130, 246, 0.4)' : '0 10px 30px rgba(239, 68, 68, 0.4)',
           }}
         >
           <div className="text-white text-xs font-bold flex flex-col items-center">
-            <span className="text-[10px] uppercase opacity-70 mb-1">Status Alert</span>
-            <span className="text-sm tracking-tight">CRITICAL OVERHEAT</span>
+            <span className="text-[10px] uppercase opacity-70 mb-1">{isRestarting ? 'System Status' : 'Status Alert'}</span>
+            <span className="text-sm tracking-tight">{isRestarting ? 'REBOOTING...' : 'CRITICAL OVERHEAT'}</span>
           </div>
           {/* Arrow */}
-          <div style={{ position: 'absolute', bottom: -8, left: '50%', transform: 'translateX(-50%)', borderLeft: '8px solid transparent', borderRight: '8px solid transparent', borderTop: '8px solid rgba(239, 68, 68, 0.95)' }} />
+          <div style={{ position: 'absolute', bottom: -8, left: '50%', transform: 'translateX(-50%)', borderLeft: '8px solid transparent', borderRight: '8px solid transparent', borderTop: `8px solid ${isRestarting ? 'rgba(59, 130, 246, 0.95)' : 'rgba(239, 68, 68, 0.95)'}` }} />
         </div>
       )}
     </div>
@@ -955,7 +960,7 @@ const Particles = () => {
   );
 };
 
-const ServerRoom = ({ showHUD }: { showHUD: boolean }) => {
+const ServerRoom = ({ showHUD, systemStatus = 'alert' }: { showHUD: boolean; systemStatus?: 'alert' | 'restarting' | 'normal' }) => {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
   
@@ -964,7 +969,9 @@ const ServerRoom = ({ showHUD }: { showHUD: boolean }) => {
   const zoomDuration = 90; // 3 seconds at 30fps
   const restoreStartFrame = alertStartFrame + zoomDuration;
   
-  const isAlertActive = frame > alertStartFrame;
+  const isActuallyAlert = systemStatus === 'alert' && frame > alertStartFrame;
+  const isRestarting = systemStatus === 'restarting';
+  const isNormal = systemStatus === 'normal';
   
   // Spring for smooth camera transition
   const zoomInSpring = spring({
@@ -1007,7 +1014,7 @@ const ServerRoom = ({ showHUD }: { showHUD: boolean }) => {
   const translateY = interpolate(zoomProgress, [0, 1], [baseTranslateY, targetTranslateY]);
   const cameraZ = interpolate(zoomProgress, [0, 1], [baseZ, targetZ]);
   
-  const glitch = isAlertActive && frame < alertStartFrame + 10 && Math.random() > 0.5;
+  const glitch = isActuallyAlert && frame < alertStartFrame + 10 && Math.random() > 0.5;
 
   return (
     <div 
@@ -1052,7 +1059,7 @@ const ServerRoom = ({ showHUD }: { showHUD: boolean }) => {
 
         <Cables />
         <Particles />
-        {showHUD && <FloatingHUD alert={isAlertActive} />}
+        {showHUD && <FloatingHUD alert={isActuallyAlert} />}
         
         {/* Background Wall (Rear) */}
         <div
@@ -1060,7 +1067,7 @@ const ServerRoom = ({ showHUD }: { showHUD: boolean }) => {
             position: 'absolute',
             width: 4000,
             height: 1200,
-            background: 'linear-gradient(to bottom, #020205, #0a0a14)',
+            background: isRestarting ? '#000' : 'linear-gradient(to bottom, #020205, #0a0a14)',
             transform: 'translate3d(-2000px, -600px, -1200px)',
             zIndex: -2,
             borderBottom: '1px solid rgba(59, 130, 246, 0.2)',
@@ -1077,7 +1084,7 @@ const ServerRoom = ({ showHUD }: { showHUD: boolean }) => {
                 bottom: 0,
                 width: '348px',
                 borderRight: '2px solid rgba(0,0,0,0.5)',
-                background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.02))',
+                background: isRestarting ? 'transparent' : 'linear-gradient(90deg, transparent, rgba(255,255,255,0.02))',
               }}
             >
               {/* Vertical cooling vents on wall */}
@@ -1094,16 +1101,16 @@ const ServerRoom = ({ showHUD }: { showHUD: boolean }) => {
         {/* Row 1 */}
         {[...Array(10)].map((_, i) => (
           <React.Fragment key={`r1-group-${i}`}>
-            <ServerRack x={i - 4} y={-2} highlighted={i === 3} />
-            {i === 3 && !isAlertActive && <HolographicData x={i - 4} y={-2} title="System Load" value="84" unit="%" />}
+            <ServerRack x={i - 4} y={-2} highlighted={i === 3} systemStatus={systemStatus} />
+            {i === 3 && !isActuallyAlert && !isRestarting && <HolographicData x={i - 4} y={-2} title="System Load" value={isNormal ? "42" : "84"} unit="%" color={isNormal ? "#10b981" : "#3b82f6"} />}
           </React.Fragment>
         ))}
         
         {/* Row 2 */}
         {[...Array(10)].map((_, i) => (
           <React.Fragment key={`r2-group-${i}`}>
-            <ServerRack x={i - 4} y={0} alert={i === 5} />
-            {i === 5 && isAlertActive && (
+            <ServerRack x={i - 4} y={0} alert={i === 5} systemStatus={systemStatus} />
+            {i === 5 && isActuallyAlert && (
               <HolographicData 
                 x={i - 4} 
                 y={0} 
@@ -1113,13 +1120,23 @@ const ServerRoom = ({ showHUD }: { showHUD: boolean }) => {
                 color="#ef4444" 
               />
             )}
-            {i === 1 && !isAlertActive && <HolographicData x={i - 4} y={0} title="Network" value="1.2" unit="Gbps" color="#10b981" />}
+            {i === 5 && isNormal && (
+               <HolographicData 
+               x={i - 4} 
+               y={0} 
+               title="Node #582 - Stable" 
+               value="36.2" 
+               unit="°C" 
+               color="#10b981" 
+             />
+            )}
+            {i === 1 && !isActuallyAlert && !isRestarting && <HolographicData x={i - 4} y={0} title="Network" value={isNormal ? "0.8" : "1.2"} unit="Gbps" color="#10b981" />}
           </React.Fragment>
         ))}
         
         {/* Row 3 */}
         {[...Array(10)].map((_, i) => (
-          <ServerRack key={`r3-${i}`} x={i - 4} y={2} />
+          <ServerRack key={`r3-${i}`} x={i - 4} y={2} systemStatus={systemStatus} />
         ))}
 
         {/* Dynamic environmental lighting */}
@@ -1128,9 +1145,9 @@ const ServerRoom = ({ showHUD }: { showHUD: boolean }) => {
             position: 'absolute',
             width: 2000,
             height: 2000,
-            background: isAlertActive 
+            background: isActuallyAlert 
               ? 'radial-gradient(circle, rgba(239, 68, 68, 0.15) 0%, transparent 70%)' 
-              : 'radial-gradient(circle, rgba(37, 99, 235, 0.1) 0%, transparent 70%)',
+              : (isNormal ? 'radial-gradient(circle, rgba(16, 185, 129, 0.15) 0%, transparent 70%)' : (isRestarting ? 'transparent' : 'radial-gradient(circle, rgba(37, 99, 235, 0.1) 0%, transparent 70%)')),
             transform: 'translate3d(-1000px, 0, -1000px) rotateX(90deg)',
             pointerEvents: 'none',
             transition: 'background 0.5s ease',
@@ -1185,11 +1202,14 @@ const LightLeak = () => {
   );
 };
 
-const SciFiAlertPopup = () => {
+const SciFiAlertPopup = ({ systemStatus, setSystemStatus }: { systemStatus: 'alert' | 'restarting' | 'normal'; setSystemStatus: (status: 'alert' | 'restarting' | 'normal') => void }) => {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
   
   const popupStartFrame = 190;
+  const isRestarting = systemStatus === 'restarting';
+  const isNormal = systemStatus === 'normal';
+
   const appear = spring({
     frame: frame - popupStartFrame,
     fps,
@@ -1201,7 +1221,7 @@ const SciFiAlertPopup = () => {
     fps,
   });
 
-  if (frame < popupStartFrame) return null;
+  if (frame < popupStartFrame || isNormal) return null;
 
   return (
     <div
@@ -1212,26 +1232,29 @@ const SciFiAlertPopup = () => {
         alignItems: 'center',
         justifyContent: 'center',
         zIndex: 100,
-        pointerEvents: 'none',
         background: `rgba(2, 6, 23, ${interpolate(appear, [0, 1], [0, 0.4])})`,
         backdropFilter: `blur(${interpolate(appear, [0, 1], [0, 8])}px)`,
+        pointerEvents: isRestarting ? 'none' : 'auto',
       }}
     >
       <div
         style={{
           width: '800px',
           height: '500px',
-          background: 'rgba(15, 23, 42, 0.8)',
-          border: '1px solid rgba(239, 68, 68, 0.5)',
+          background: isRestarting ? 'rgba(15, 23, 42, 0.95)' : 'rgba(15, 23, 42, 0.8)',
+          border: `1px solid ${isRestarting ? 'rgba(59, 130, 246, 0.5)' : 'rgba(239, 68, 68, 0.5)'}`,
           borderRadius: '24px',
           padding: '40px',
           transform: `scale(${interpolate(appear, [0, 1], [0.8, 1])})`,
           opacity: appear,
-          boxShadow: '0 0 50px rgba(239, 68, 68, 0.2), inset 0 0 30px rgba(239, 68, 68, 0.1)',
+          boxShadow: isRestarting 
+            ? '0 0 50px rgba(59, 130, 246, 0.2), inset 0 0 30px rgba(59, 130, 246, 0.1)'
+            : '0 0 50px rgba(239, 68, 68, 0.2), inset 0 0 30px rgba(239, 68, 68, 0.1)',
           display: 'flex',
           flexDirection: 'column',
           position: 'relative',
           overflow: 'hidden',
+          transition: 'all 0.8s cubic-bezier(0.4, 0, 0.2, 1)',
         }}
       >
         {/* Animated Scanline for Popup */}
@@ -1242,7 +1265,7 @@ const SciFiAlertPopup = () => {
             left: 0,
             right: 0,
             height: '1px',
-            background: 'rgba(239, 68, 68, 0.2)',
+            background: isRestarting ? 'rgba(59, 130, 246, 0.2)' : 'rgba(239, 68, 68, 0.2)',
             zIndex: 1,
           }}
         />
@@ -1250,11 +1273,13 @@ const SciFiAlertPopup = () => {
         {/* Header */}
         <div className="flex justify-between items-start mb-12" style={{ transform: `translateY(${interpolate(contentSlide, [0, 1], [20, 0])}px)`, opacity: contentSlide }}>
           <div>
-            <div className="text-red-500 font-bold text-sm tracking-[0.2em] uppercase mb-2">Security Breach / Hardware Failure</div>
-            <h2 className="text-white text-4xl font-black">NODE_ALERT: #582-X</h2>
+            <div className={`${isRestarting ? 'text-blue-400' : 'text-red-500'} font-bold text-sm tracking-[0.2em] uppercase mb-2`}>
+              {isRestarting ? 'System Recovery in Progress' : 'Security Breach / Hardware Failure'}
+            </div>
+            <h2 className="text-white text-4xl font-black">{isRestarting ? 'REBOOT_SEQUENCE' : 'NODE_ALERT: #582-X'}</h2>
           </div>
-          <div className="px-4 py-2 border border-red-500 text-red-500 font-mono text-xs rounded-md animate-pulse">
-            CRITICAL_OVERHEAT
+          <div className={`px-4 py-2 border ${isRestarting ? 'border-blue-500 text-blue-400' : 'border-red-500 text-red-500'} font-mono text-xs rounded-md animate-pulse`}>
+            {isRestarting ? 'EXECUTING_RESTART' : 'CRITICAL_OVERHEAT'}
           </div>
         </div>
 
@@ -1262,13 +1287,19 @@ const SciFiAlertPopup = () => {
         <div className="flex gap-12 flex-1" style={{ transform: `translateY(${interpolate(contentSlide, [0, 1], [40, 0])}px)`, opacity: contentSlide }}>
           {/* Left Side: Visual Representation */}
           <div className="w-1/3 flex flex-col gap-6">
-            <div className="aspect-square bg-red-500/10 border border-red-500/20 rounded-2xl flex items-center justify-center relative overflow-hidden">
-              <svg className="w-24 h-24 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z" />
-              </svg>
+            <div className={`aspect-square ${isRestarting ? 'bg-blue-500/10 border-blue-500/20' : 'bg-red-500/10 border-red-500/20'} border rounded-2xl flex items-center justify-center relative overflow-hidden`}>
+              {isRestarting ? (
+                <svg className="w-24 h-24 text-blue-500 animate-spin" fill="none" viewBox="0 0 24 24" stroke="currentColor" style={{ animationDuration: '3s' }}>
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                </svg>
+              ) : (
+                <svg className="w-24 h-24 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z" />
+                </svg>
+              )}
               {/* Spinning Ring */}
               <div 
-                className="absolute inset-4 border-2 border-red-500/20 border-t-red-500/60 rounded-full"
+                className={`absolute inset-4 border-2 ${isRestarting ? 'border-blue-500/20 border-t-blue-500/60' : 'border-red-500/20 border-t-red-500/60'} rounded-full`}
                 style={{ transform: `rotate(${frame * 5}deg)` }}
               />
             </div>
@@ -1278,40 +1309,83 @@ const SciFiAlertPopup = () => {
             </div>
           </div>
 
-          {/* Right Side: Data Metrics */}
-          <div className="flex-1 space-y-8">
-            <div className="grid grid-cols-2 gap-6">
-              {[
-                { label: 'CORE_TEMP', value: '98.4', unit: '°C', status: 'DANGER' },
-                { label: 'FAN_SPEED', value: '0', unit: 'RPM', status: 'FAULT' },
-                { label: 'VOLTAGE', value: '1.42', unit: 'V', status: 'STABLE' },
-                { label: 'LOAD_IDX', value: '94.2', unit: '%', status: 'HIGH' },
-              ].map((stat, i) => (
-                <div key={i} className="bg-white/5 p-4 rounded-xl border border-white/10">
-                  <div className="text-[10px] text-gray-500 font-mono mb-1">{stat.label}</div>
-                  <div className="flex items-baseline gap-2">
-                    <span className={`text-2xl font-bold ${stat.status === 'DANGER' ? 'text-red-500' : 'text-white'}`}>{stat.value}</span>
-                    <span className="text-[10px] text-gray-400">{stat.unit}</span>
+          {/* Right Side: Data Metrics / Progress */}
+          <div className="flex-1 flex flex-col">
+            {isRestarting ? (
+              <div className="flex-1 flex flex-col justify-center space-y-8">
+                <div className="space-y-4">
+                  <div className="flex justify-between text-xs font-mono">
+                    <span className="text-blue-400">SHUTDOWN_SEQUENCE</span>
+                    <span className="text-white">COMPLETED</span>
                   </div>
-                  <div className={`text-[8px] font-bold mt-2 ${stat.status === 'DANGER' ? 'text-red-500' : 'text-blue-400'}`}>
-                    {stat.status}
+                  <div className="h-2 bg-blue-500/10 rounded-full overflow-hidden border border-blue-500/20">
+                    <div className="h-full bg-blue-500 w-full" />
                   </div>
                 </div>
-              ))}
-            </div>
-            
-            {/* System Log */}
-            <div className="bg-black/40 p-4 rounded-xl border border-white/5 font-mono text-[10px] space-y-1">
-              <div className="text-red-500">[11:24:52] ALERT: Thermal threshold exceeded</div>
-              <div className="text-red-500">[11:24:55] ERROR: Cooling fan #2 failure detected</div>
-              <div className="text-gray-500">[11:24:58] INFO: Initiating emergency shutdown sequence...</div>
-              <div className="text-blue-400">[11:25:01] SYS: Rerouting critical traffic to Node #583</div>
-            </div>
+                <div className="space-y-4">
+                  <div className="flex justify-between text-xs font-mono">
+                    <span className="text-blue-400">CORE_REBOOT</span>
+                    <span className="text-white">IN_PROGRESS...</span>
+                  </div>
+                  <div className="h-2 bg-blue-500/10 rounded-full overflow-hidden border border-blue-500/20">
+                    <div 
+                      className="h-full bg-blue-500 transition-all duration-100" 
+                      style={{ width: `${Math.min(100, (frame % 100) * 1.5)}%` }} 
+                    />
+                  </div>
+                </div>
+                <div className="bg-blue-500/5 p-4 rounded-xl border border-blue-500/10 font-mono text-[10px] text-blue-300/70 space-y-1">
+                  <div>{'>'} Initializing kernel...</div>
+                  <div>{'>'} Checking filesystem integrity...</div>
+                  <div>{'>'} Loading network stack...</div>
+                  <div className="animate-pulse">{'>'} Starting services...</div>
+                </div>
+              </div>
+            ) : (
+              <div className="flex-1 space-y-8">
+                <div className="grid grid-cols-2 gap-6">
+                  {[
+                    { label: 'CORE_TEMP', value: '98.4', unit: '°C', status: 'DANGER' },
+                    { label: 'FAN_SPEED', value: '0', unit: 'RPM', status: 'FAULT' },
+                    { label: 'VOLTAGE', value: '1.42', unit: 'V', status: 'STABLE' },
+                    { label: 'LOAD_IDX', value: '94.2', unit: '%', status: 'HIGH' },
+                  ].map((stat, i) => (
+                    <div key={i} className="bg-white/5 p-4 rounded-xl border border-white/10">
+                      <div className="text-[10px] text-gray-500 font-mono mb-1">{stat.label}</div>
+                      <div className="flex items-baseline gap-2">
+                        <span className={`text-2xl font-bold ${stat.status === 'DANGER' ? 'text-red-500' : 'text-white'}`}>{stat.value}</span>
+                        <span className="text-[10px] text-gray-400">{stat.unit}</span>
+                      </div>
+                      <div className={`text-[8px] font-bold mt-2 ${stat.status === 'DANGER' ? 'text-red-500' : 'text-blue-400'}`}>
+                        {stat.status}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                
+                {/* System Log */}
+                <div className="bg-black/40 p-4 rounded-xl border border-white/5 font-mono text-[10px] space-y-1">
+                  <div className="text-red-500">[11:24:52] ALERT: Thermal threshold exceeded</div>
+                  <div className="text-red-500">[11:24:55] ERROR: Cooling fan #2 failure detected</div>
+                  {frame >= 190 + 60 && (
+                    <div className="text-blue-400 animate-pulse">
+                      [11:24:58] INFO: AUTO_RECOVERY_IN {Math.max(0, Math.ceil((190 + 150 - frame) / 30))}s...
+                    </div>
+                  )}
+                </div>
+
+                {/* Status Indicator instead of button */}
+                <div className="w-full py-4 bg-red-500/10 border border-red-500/20 text-red-500 font-bold rounded-xl flex items-center justify-center gap-3">
+                  <div className="w-2 h-2 bg-red-500 rounded-full animate-ping" />
+                  {frame < 190 + 150 ? 'SYSTEM_CRITICAL / STABILIZING...' : 'SYSTEM_LOCKDOWN / REBOOTING'}
+                </div>
+              </div>
+            )}
           </div>
         </div>
 
         {/* Bottom Deco */}
-        <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-transparent via-red-500 to-transparent opacity-50" />
+        <div className={`absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-transparent ${isRestarting ? 'via-blue-500' : 'via-red-500'} to-transparent opacity-50`} />
       </div>
     </div>
   );
@@ -1320,10 +1394,50 @@ const SciFiAlertPopup = () => {
 export const IoTDashboard = () => {
   const frame = useCurrentFrame();
   const [showHUD, setShowHUD] = useState(false);
+  const [systemStatus, setSystemStatus] = useState<'alert' | 'restarting' | 'normal'>('alert');
+  const [restartStartTime, setRestartStartTime] = useState<number | null>(null);
+  const [statusQueue, setStatusQueue] = useState<('alert' | 'restarting' | 'normal')[]>([]);
   
   const toggleHUD = useCallback(() => {
     setShowHUD((prev) => !prev);
   }, []);
+
+  const handleSetSystemStatus = useCallback((status: 'alert' | 'restarting' | 'normal') => {
+    setStatusQueue(prev => [...prev, status]);
+  }, []);
+
+  // Process the queue
+  React.useEffect(() => {
+    if (statusQueue.length > 0) {
+      const nextStatus = statusQueue[0];
+      setSystemStatus(nextStatus);
+      if (nextStatus === 'restarting') {
+        setRestartStartTime(frame);
+      }
+      setStatusQueue(prev => prev.slice(1));
+    }
+  }, [statusQueue, frame]);
+
+  // Handle auto-transition from restarting to normal
+  React.useEffect(() => {
+    if (systemStatus === 'restarting' && restartStartTime !== null) {
+      const elapsed = frame - restartStartTime;
+      if (elapsed > 100) { // 100 frames for the reboot sequence
+        handleSetSystemStatus('normal');
+        setRestartStartTime(null);
+      }
+    }
+  }, [frame, systemStatus, restartStartTime, handleSetSystemStatus]);
+
+  // Handle auto-triggering restart from alert
+  React.useEffect(() => {
+    const popupStartFrame = 190;
+    const autoRestartDelay = 250; // Increased delay to 150 frames (approx 5 seconds at 30fps)
+    if (systemStatus === 'alert' && frame >= popupStartFrame + autoRestartDelay) {
+      handleSetSystemStatus('restarting');
+    }
+
+  }, [frame, systemStatus, handleSetSystemStatus]);
 
   return (
     <AbsoluteFill className="bg-[#0a0a0f] text-white font-sans overflow-hidden">
@@ -1335,13 +1449,17 @@ export const IoTDashboard = () => {
         <LightLeak />
         <ScanLine />
         
-        <ServerRoom showHUD={showHUD} />
-        
         <Sidebar />
         <TopBar onToggleHUD={toggleHUD} />
-        <LeftPanel />
-        <RightPanel />
-        <SciFiAlertPopup />
+        
+        {/* All content should have zIndex: 1, SciFiAlertPopup should have zIndex: 100 */}
+        <div style={{ position: 'absolute', inset: 0, zIndex: 1 }}>
+          <LeftPanel />
+          <RightPanel />
+          <ServerRoom showHUD={showHUD} systemStatus={systemStatus} />
+        </div>
+        
+        <SciFiAlertPopup systemStatus={systemStatus} setSystemStatus={handleSetSystemStatus} />
       </div>
     </AbsoluteFill>
   );

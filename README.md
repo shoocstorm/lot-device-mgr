@@ -59,7 +59,7 @@ npm run dev
 
 To render the final visualization as an MP4 video:
 ```bash
-npx remotion render src/index.ts IoTDashboard out.mp4
+npx remotion render src/index.ts IoTDashboard IoTDashboard-vx.mp4
 ```
 
 ## 📂 Project Structure
