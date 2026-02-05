@@ -376,11 +376,13 @@ const ServerRack = ({ x, y, highlighted = false, alert = false }: { x: number; y
     >
       {alert && frame > 120 && (
         <Audio 
-          src={staticFile("freezer-hum-1.mp3")} 
+          src={staticFile("alert.mp3")} 
           startFrom={0} 
           volume={0.5} 
+          loop
         />
       )}
+      
       {/* Alert Glow Box */}
       {alert && (
         <div
