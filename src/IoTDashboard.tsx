@@ -642,7 +642,7 @@ const Cables = () => {
   );
 };
 
-const Floor = () => {
+const Floor = ({isRestarting = false}: {isRestarting?: boolean}) => {
   return (
     <div
       style={{
@@ -667,6 +667,27 @@ const Floor = () => {
           backgroundSize: '120px 120px',
         }}
       />
+
+      {/* Neon Floor Strips */}
+      {!isRestarting && (
+        <>
+          {[...Array(6)].map((_, i) => (
+            <div
+              key={`floor-neon-${i}`}
+              style={{
+                position: 'absolute',
+                left: 0,
+                right: 0,
+                top: 1000 + i * 1200,
+                height: '2px',
+                background: 'linear-gradient(90deg, transparent, #3b82f6, transparent)',
+                boxShadow: '0 0 15px #3b82f6',
+                opacity: 0.3,
+              }}
+            />
+          ))}
+        </>
+      )}
 
       {/* Subtle Tile Texture and Micro-scratches */}
       <div 
@@ -1080,7 +1101,6 @@ const ServerRoom = ({
   const isActuallyAlert = systemStatus === 'alert' && frame > alertStartFrame;
   const isRestarting = systemStatus === 'restarting';
   const isNormal = systemStatus === 'normal';
-  
   // Spring for smooth camera transition
   const zoomInSpring = spring({
     frame: frame - alertStartFrame,
@@ -1140,7 +1160,7 @@ const ServerRoom = ({
         }}
       >
 
-        <Floor />
+        <Floor isRestarting={isRestarting}/>
 
         {/* Company Branding - Ceiling Bar */}
         <div
@@ -1211,9 +1231,131 @@ const ServerRoom = ({
           </div>
         ))}
 
-        <Cables />
-        <Particles />
         <Butterfly />
+         <Particles />
+         <Cables />
+
+        {/* Left Wall */}
+        <div
+          style={{
+            position: 'absolute',
+            width: 2400,
+            height: 1100,
+            background: isRestarting ? '#000' : 'linear-gradient(to right, #0a0f1e, #050a15)',
+            transform: 'translate3d(-3000px, -400px, -200px) rotateY(90deg)',
+            transformOrigin: 'left center',
+            zIndex: -2,
+            borderRight: '4px solid rgba(59, 130, 246, 0.3)',
+            overflow: 'hidden',
+          }}
+        >
+          {/* Structural Panels */}
+          {[...Array(6)].map((_, i) => (
+            <div
+              key={`left-panel-${i}`}
+              style={{
+                position: 'absolute',
+                left: i * 400,
+                top: 0,
+                bottom: 0,
+                width: '398px',
+                borderRight: '2px solid rgba(0,0,0,0.5)',
+                background: 'linear-gradient(90deg, rgba(15, 23, 42, 0.4), transparent)',
+              }}
+            >
+              {/* Horizontal Glow Strips */}
+              {!isRestarting && (
+                <div 
+                  style={{ 
+                    position: 'absolute', 
+                    top: '20%', 
+                    left: 0, 
+                    right: 0, 
+                    height: '1px', 
+                    background: 'linear-gradient(90deg, transparent, #3b82f6, transparent)',
+                    opacity: 0.2
+                  }} 
+                />
+              )}
+              
+              {/* Zone Label */}
+              <div style={{ 
+                position: 'absolute', 
+                top: '50px', 
+                left: '30px', 
+                color: '#3b82f6', 
+                fontSize: '14px', 
+                fontFamily: 'monospace', 
+                fontWeight: 'bold',
+                opacity: 0.6,
+                letterSpacing: '4px',
+                transform: 'rotate(-90deg)',
+                transformOrigin: 'left center'
+              }}>
+                ZONE_{String.fromCharCode(65 + i)}
+              </div>
+
+              {/* Status Modules */}
+              <div style={{ position: 'absolute', bottom: '100px', left: '40px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                {[...Array(4)].map((_, k) => (
+                  <div key={k} style={{ width: '40px', height: '4px', background: isRestarting ? '#1e293b' : '#3b82f6', opacity: 0.3, boxShadow: isRestarting ? 'none' : '0 0 10px #3b82f6' }} />
+                ))}
+              </div>
+            </div>
+          ))}
+
+          {/* Large Vertical Pillar on Left Wall */}
+          <div style={{
+            position: 'absolute',
+            left: '1200px',
+            top: 0,
+            bottom: 0,
+            width: '60px',
+            background: '#1e293b',
+            boxShadow: '0 0 40px rgba(0,0,0,0.8)',
+            zIndex: 1,
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'center',
+            alignItems: 'center',
+            gap: '20px'
+          }}>
+            {[...Array(3)].map((_, i) => (
+              <div key={i} style={{ width: '30px', height: '30px', border: '2px solid #3b82f6', borderRadius: '50%', opacity: 0.5 }} />
+            ))}
+          </div>
+        </div>
+
+        {/* Right Wall */}
+        <div
+          style={{
+            position: 'absolute',
+            width: 2400,
+            height: 800,
+            background: isRestarting ? '#000' : 'linear-gradient(to left, #0a0f1e, #050a15)',
+            transform: 'translate3d(2000px, -400px, -1200px) rotateY(-90deg)',
+            transformOrigin: 'right center',
+            zIndex: -2,
+            borderLeft: '4px solid rgba(59, 130, 246, 0.3)',
+            overflow: 'hidden',
+          }}
+        >
+          {/* Symmetrical panels for right wall */}
+          {[...Array(6)].map((_, i) => (
+            <div
+              key={`right-panel-${i}`}
+              style={{
+                position: 'absolute',
+                right: i * 400,
+                top: 0,
+                bottom: 0,
+                width: '398px',
+                borderLeft: '2px solid rgba(0,0,0,0.5)',
+                background: 'linear-gradient(-90deg, rgba(15, 23, 42, 0.4), transparent)',
+              }}
+            />
+          ))}
+        </div>
 
         {/* Background Wall (Rear) */}
         <div
@@ -1295,7 +1437,7 @@ const ServerRoom = ({
                       width: '100%', 
                       height: '3px', 
                       background: 'rgba(0,0,0,0.7)',
-                      borderBottom: '1px solid rgba(255,255,255,0.05)',
+                      borderBottom: '1px solid rgba(255,255,255,0.55)',
                     }} 
                   />
                 ))}
@@ -1332,8 +1474,71 @@ const ServerRoom = ({
                 boxShadow: '0 0 50px rgba(0,0,0,0.9)',
                 zIndex: 1,
               }}
-            />
+            >
+              {/* Pillar Neon Accent */}
+              {!isRestarting && (
+                <div 
+                  style={{ 
+                    position: 'absolute', 
+                    left: '49px', 
+                    top: 0, 
+                    bottom: 0, 
+                    width: '2px', 
+                    background: '#3b82f6', 
+                    boxShadow: '0 0 15px #3b82f6' 
+                  }} 
+                />
+              )}
+            </div>
           ))}
+
+          {/* SERVER ROOM PROTOCOLS - Poster */}
+          {!isRestarting && (
+            <div
+              style={{
+                position: 'absolute',
+                left: '360px',
+                top: '150px',
+                width: '280px',
+                height: '380px',
+                background: 'rgba(15, 23, 42, 0.9)',
+                border: '2px solid rgba(59, 130, 246, 0.5)',
+                padding: '20px',
+                boxShadow: '0 0 30px rgba(0,0,0,0.5), inset 0 0 20px rgba(59, 130, 246, 0.1)',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '12px',
+                zIndex: 2,
+              }}
+            >
+              <div style={{ color: '#3b82f6', fontWeight: 'bold', fontSize: '14px', borderBottom: '1px solid rgba(59, 130, 246, 0.3)', paddingBottom: '8px', letterSpacing: '2px', textAlign: 'center' }}>
+                FACILITY PROTOCOLS
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                {[
+                  "AUTHORIZED PERSONNEL ONLY",
+                  "NO MAGNETIC DEVICES BEYOND THIS POINT",
+                  "MAINTAIN TEMP BELOW 22°C",
+                  "REPORT ALL NODE FAILURES IMMEDIATELY",
+                  "ESD GEAR MANDATORY",
+                  "DO NOT BLOCK COOLING VENTS"
+                ].map((rule, idx) => (
+                  <div key={idx} style={{ display: 'flex', gap: '10px', alignItems: 'flex-start' }}>
+                    <div style={{ width: '4px', height: '4px', background: '#3b82f6', marginTop: '6px', borderRadius: '50%' }} />
+                    <div style={{ color: 'white', fontSize: '9px', fontFamily: 'monospace', opacity: 0.8, lineHeight: '1.4' }}>
+                      {rule}
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <div style={{ marginTop: 'auto', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div style={{ color: '#ef4444', fontSize: '10px', fontWeight: 'bold' }}>SECURITY LEVEL 4</div>
+                <div style={{ width: '30px', height: '30px', border: '1px solid #3b82f6', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                   <div style={{ width: '15px', height: '15px', background: '#3b82f6', opacity: 0.5 }} />
+                </div>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Rows of Racks */}
