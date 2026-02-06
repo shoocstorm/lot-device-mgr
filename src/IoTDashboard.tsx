@@ -347,34 +347,35 @@ const HolographicData = ({ x, y, title, value, unit, color = '#3b82f6' }: { x: n
 };
 
 const ServerRack = ({ 
-  x, 
-  y, 
-  highlighted = false, 
-  alert = false, 
-  systemStatus = 'alert',
-  onHover,
-  onClick,
-  isHovered = false
-}: { 
-  x: number; 
-  y: number; 
-  highlighted?: boolean; 
-  alert?: boolean; 
-  systemStatus?: 'alert' | 'restarting' | 'normal';
-  onHover?: (id: string | null) => void;
-  onClick?: (id: string) => void;
-  isHovered?: boolean;
-}) => {
-  const frame = useCurrentFrame();
-  const { fps } = useVideoConfig();
-  
-  const rackId = `rack_${x}_${y}`;
-  const isActuallyAlert = alert && systemStatus === 'alert';
-  const isRestarting = systemStatus === 'restarting';
-  const isNormal = systemStatus === 'normal';
+   x, 
+   y, 
+   highlighted = false, 
+   alert = false, 
+   systemStatus = 'alert',
+   onHover,
+   onClick,
+   isHovered = false
+ }: { 
+   x: number; 
+   y: number; 
+   highlighted?: boolean; 
+   alert?: boolean; 
+   systemStatus?: 'alert' | 'restarting' | 'normal';
+   onHover?: (id: string | null) => void;
+   onClick?: (id: string) => void;
+   isHovered?: boolean;
+ }) => {
+   const frame = useCurrentFrame();
+   const { fps } = useVideoConfig();
+   const alertStartFrame = 120; // Impact frame
+   
+   const rackId = `rack_${x}_${y}`;
+   const isActuallyAlert = alert && systemStatus === 'alert' && frame >= alertStartFrame;
+   const isRestarting = systemStatus === 'restarting';
+   const isNormal = systemStatus === 'normal';
 
   const appear = spring({
-    frame: frame - 60 - (x + y) * 2,
+    frame: frame - 10 - (x + y) * 2,
     fps,
     config: { damping: 12, stiffness: 100 },
   });
@@ -401,7 +402,7 @@ const ServerRack = ({
         position: 'absolute',
         transformStyle: 'preserve-3d',
         transform: `translate3d(${x * 90}px, 0, ${y * 100}px) scaleY(${appear})`,
-        opacity: Math.min(1, appear * 2),
+        opacity: Math.min(1, appear * 5),
         cursor: 'pointer',
       }}
     >
@@ -640,9 +641,9 @@ const Ceiling = () => {
             top: 1000,
             width: '4px',
             height: '2000px',
-            background: 'linear-gradient(to bottom, #1e3a8a, transparent)',
+            background: 'linear-gradient(to bottom, #fbfbfbff, transparent)',
             boxShadow: '0 0 30px rgba(30, 58, 138, 0.3)',
-            opacity: 0.1,
+            opacity: 1,
           }}
         />
       ))}
@@ -883,7 +884,7 @@ const Floor = () => {
   );
 };
 
-// pops up only when user 
+// pops up only when user clicks on the notification button
 const FloatingHUD = ({ alert = false }: { alert?: boolean }) => {
   const frame = useCurrentFrame();
   const float = Math.sin(frame / 30) * 10;
@@ -990,8 +991,122 @@ const Particles = () => {
   );
 };
 
+const Butterfly = () => {
+  const frame = useCurrentFrame();
+  const alertStartFrame = 120;
+  const impactDuration = 30; // Time it takes to fly into the server
+  const impactFrame = alertStartFrame;
+  const startFlightFrame = impactFrame - impactDuration;
+
+  // Normal random flight before targeting
+  const randomX = Math.sin(frame / 45) * 400 + Math.cos(frame / 20) * 100;
+  const randomY = Math.cos(frame / 35) * 150 - 200;
+  const randomZ = Math.sin(frame / 60) * 500;
+
+  // Target coordinates (Rack #582 at x=1, y=0)
+  // ServerRack x=1, y=0 translates to roughly: x=90, y=-70 (middle of rack), z=0
+  const targetX = 90;
+  const targetY = -70;
+  const targetZ = 0;
+
+  let x, y, z, opacity = 1, scale = 1;
+
+  if (frame < startFlightFrame) {
+    // Normal wandering
+    x = randomX;
+    y = randomY;
+    z = randomZ;
+  } else if (frame < impactFrame) {
+    // Targeting flight
+    const progress = interpolate(frame, [startFlightFrame, impactFrame], [0, 1], {
+       easing: (t) => t * t * (3 - 2 * t), // Manual smooth-step instead of Easing.bezier
+     });
+    
+    // Starting point for the targeting phase
+    const startX = Math.sin(startFlightFrame / 45) * 400 + Math.cos(startFlightFrame / 20) * 100;
+    const startY = Math.cos(startFlightFrame / 35) * 150 - 200;
+    const startZ = Math.sin(startFlightFrame / 60) * 500;
+
+    x = interpolate(progress, [0, 1], [startX, targetX]);
+    y = interpolate(progress, [0, 1], [startY, targetY]);
+    z = interpolate(progress, [0, 1], [startZ, targetZ]);
+    
+    // Spiral slightly as it approaches
+    x += Math.sin(frame / 3) * (1 - progress) * 50;
+    y += Math.cos(frame / 3) * (1 - progress) * 50;
+    
+    scale = interpolate(progress, [0, 1], [1, 0.5]);
+  } else {
+    // Post-impact: butterfly is gone (caused the short circuit!)
+    x = targetX;
+    y = targetY;
+    z = targetZ;
+    opacity = 0;
+    scale = 0;
+  }
+  
+  // Flapping animation - gets faster as it approaches
+  const flapSpeed = frame < startFlightFrame ? 2 : interpolate(frame, [startFlightFrame, impactFrame], [2, 0.5]);
+  const flap = Math.sin(frame / flapSpeed) * 45;
+  
+  // Rotation based on movement
+  const rotateY = frame < impactFrame ? Math.atan2(targetX - x, targetZ - z) * (180 / Math.PI) : 0;
+
+  if (opacity === 0) return null;
+
+  return (
+    <div
+      style={{
+        position: 'absolute',
+        transformStyle: 'preserve-3d',
+        transform: `translate3d(${x}px, ${y}px, ${z}px) rotateY(${rotateY}deg) scale(${scale})`,
+        opacity,
+      }}
+    >
+      {/* Body */}
+      <div
+        style={{
+          position: 'absolute',
+          width: '2px',
+          height: '8px',
+          background: '#000',
+          borderRadius: '2px',
+          transform: 'translate3d(-1px, -4px, 0)',
+        }}
+      />
+      {/* Left Wing */}
+      <div
+        style={{
+          position: 'absolute',
+          width: '10px',
+          height: '12px',
+          background: 'rgba(255, 200, 50, 0.8)',
+          border: '1px solid rgba(0,0,0,0.2)',
+          borderRadius: '50% 50% 10% 50%',
+          transformOrigin: 'right center',
+          transform: `rotateY(${flap}deg) translate3d(-10px, -6px, 0)`,
+          boxShadow: '0 0 5px rgba(255, 200, 50, 0.4)',
+        }}
+      />
+      {/* Right Wing */}
+      <div
+        style={{
+          position: 'absolute',
+          width: '10px',
+          height: '12px',
+          background: 'rgba(255, 200, 50, 0.8)',
+          border: '1px solid rgba(0,0,0,0.2)',
+          borderRadius: '50% 50% 50% 10%',
+          transformOrigin: 'left center',
+          transform: `rotateY(${-flap}deg) translate3d(0, -6px, 0)`,
+          boxShadow: '0 0 5px rgba(255, 200, 50, 0.4)',
+        }}
+      />
+    </div>
+  );
+};
+
 const ServerRoom = ({ 
-  showHUD, 
   systemStatus,
   onRackHover,
   onRackClick,
@@ -1075,6 +1190,52 @@ const ServerRoom = ({
       >
         <Ceiling />
         <Floor />
+
+        {/* Company Branding - Ceiling Bar */}
+        <div
+          style={{
+            position: 'absolute',
+            width: 4000,
+            height: 120,
+            background: 'linear-gradient(to bottom, #111827, #030712)',
+            borderBottom: '4px solid #3b82f6',
+            transform: 'translate3d(-2000px, -450px, -1100px)',
+            boxShadow: '0 20px 50px rgba(0,0,0,0.8)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1,
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: '24px', transform: 'translateY(10px)' }}>
+            {/* Logo: Hexagonal Sci-fi design */}
+            <div style={{ position: 'relative', width: 50, height: 50, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <div style={{ position: 'absolute', inset: 0, border: '3px solid #3b82f6', transform: 'rotate(45deg)', boxShadow: '0 0 20px rgba(59, 130, 246, 0.6)' }} />
+              <div style={{ position: 'absolute', inset: '10px', background: '#3b82f6', transform: 'rotate(45deg)', opacity: 0.8 }} />
+              <div style={{ width: 12, height: 12, background: 'white', borderRadius: '50%', boxShadow: '0 0 10px white' }} />
+            </div>
+            
+            <div style={{ display: 'flex', flexDirection: 'column' }}>
+              <div style={{ 
+                color: 'white', 
+                fontSize: '42px', 
+                fontWeight: 900, 
+                letterSpacing: '8px', 
+                fontFamily: 'system-ui, -apple-system, sans-serif',
+                textShadow: '0 0 20px rgba(59, 130, 246, 0.8)',
+                background: 'linear-gradient(to right, #fff, #94a3b8)',
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+                lineHeight: 1,
+              }}>
+                JAVIS INDUSTRY
+              </div>
+              <div style={{ color: '#3b82f6', fontSize: '12px', letterSpacing: '10px', marginTop: '4px', fontWeight: 'bold', textAlign: 'center', opacity: 0.8 }}>
+                SECURE DATA INFRASTRUCTURE
+              </div>
+            </div>
+          </div>
+        </div>
         
         {/* Overhead Cable Trays - Adding for more professional look */}
         {[...Array(3)].map((_, i) => (
@@ -1101,6 +1262,7 @@ const ServerRoom = ({
 
         <Cables />
         <Particles />
+        <Butterfly />
 
         {/* Background Wall (Rear) */}
         <div
@@ -1267,7 +1429,13 @@ const LightLeak = () => {
   );
 };
 
-const SciFiAlertPopup = ({ systemStatus, setSystemStatus }: { systemStatus: 'alert' | 'restarting' | 'normal'; setSystemStatus: (status: 'alert' | 'restarting' | 'normal') => void }) => {
+const SciFiAlertPopup = ({ 
+  systemStatus, 
+  restartStartTime 
+}: { 
+  systemStatus: 'alert' | 'restarting' | 'normal'; 
+  restartStartTime: number | null;
+}) => {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
   
@@ -1286,6 +1454,7 @@ const SciFiAlertPopup = ({ systemStatus, setSystemStatus }: { systemStatus: 'ale
     fps,
   });
 
+  // Keep showing during restarting, only hide when normal
   if (frame < popupStartFrame || isNormal) return null;
 
   return (
@@ -1395,7 +1564,11 @@ const SciFiAlertPopup = ({ systemStatus, setSystemStatus }: { systemStatus: 'ale
                   <div className="h-2 bg-blue-500/10 rounded-full overflow-hidden border border-blue-500/20">
                     <div 
                       className="h-full bg-blue-500 transition-all duration-100" 
-                      style={{ width: `${Math.min(100, (frame % 100) * 1.5)}%` }} 
+                      style={{ 
+                        width: restartStartTime !== null 
+                          ? `${Math.min(100, (frame - restartStartTime) * 1.5)}%` 
+                          : '0%' 
+                      }} 
                     />
                   </div>
                 </div>
@@ -1637,7 +1810,10 @@ export const IoTDashboard = () => {
           />
         </div>
         
-        <SciFiAlertPopup systemStatus={systemStatus} setSystemStatus={handleSetSystemStatus} />
+        <SciFiAlertPopup 
+           systemStatus={systemStatus} 
+           restartStartTime={restartStartTime}
+         />
         
         {selectedDevice && (
           <DeviceInfoPopup 
