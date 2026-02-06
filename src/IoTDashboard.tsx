@@ -35,6 +35,7 @@ const Sidebar = () => {
         alignItems: 'center',
         padding: '20px 0',
         transform: `translateX(${sidebarX}px)`,
+        position: 'relative',
         zIndex: 10,
       }}
     >
@@ -345,10 +346,29 @@ const HolographicData = ({ x, y, title, value, unit, color = '#3b82f6' }: { x: n
   );
 };
 
-const ServerRack = ({ x, y, highlighted = false, alert = false, systemStatus = 'alert' }: { x: number; y: number; highlighted?: boolean; alert?: boolean; systemStatus?: 'alert' | 'restarting' | 'normal' }) => {
+const ServerRack = ({ 
+  x, 
+  y, 
+  highlighted = false, 
+  alert = false, 
+  systemStatus = 'alert',
+  onHover,
+  onClick,
+  isHovered = false
+}: { 
+  x: number; 
+  y: number; 
+  highlighted?: boolean; 
+  alert?: boolean; 
+  systemStatus?: 'alert' | 'restarting' | 'normal';
+  onHover?: (id: string | null) => void;
+  onClick?: (id: string) => void;
+  isHovered?: boolean;
+}) => {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
   
+  const rackId = `rack_${x}_${y}`;
   const isActuallyAlert = alert && systemStatus === 'alert';
   const isRestarting = systemStatus === 'restarting';
   const isNormal = systemStatus === 'normal';
@@ -371,11 +391,18 @@ const ServerRack = ({ x, y, highlighted = false, alert = false, systemStatus = '
 
   return (
     <div
+      onMouseEnter={() => onHover?.(rackId)}
+      onMouseLeave={() => onHover?.(null)}
+      onClick={(e) => {
+        e.stopPropagation();
+        onClick?.(rackId);
+      }}
       style={{
         position: 'absolute',
         transformStyle: 'preserve-3d',
         transform: `translate3d(${x * 90}px, 0, ${y * 100}px) scaleY(${appear})`,
         opacity: Math.min(1, appear * 2),
+        cursor: 'pointer',
       }}
     >
       {isActuallyAlert && frame > 120 && (
@@ -410,14 +437,14 @@ const ServerRack = ({ x, y, highlighted = false, alert = false, systemStatus = '
           width: rackWidth,
           height: rackHeight,
           background: isRestarting ? '#020617' : '#0f172a',
-          border: `2px solid ${isActuallyAlert ? '#ef4444' : (isNormal ? '#10b981' : '#334155')}`,
+          border: `2px solid ${isActuallyAlert ? '#ef4444' : (isNormal ? '#10b981' : (isHovered ? '#3b82f6' : '#334155'))}`,
           transform: `translate3d(0, ${-rackHeight}px, ${rackDepth / 2}px)`,
           display: 'flex',
           flexDirection: 'column',
           padding: '2px',
-          boxShadow: highlighted ? '0 0 40px rgba(59, 130, 246, 0.4)' : (isActuallyAlert ? '0 0 20px rgba(239, 68, 68, 0.3)' : (isNormal ? '0 0 20px rgba(16, 185, 129, 0.2)' : 'inset 0 0 20px rgba(0,0,0,0.8)')),
+          boxShadow: isHovered ? '0 0 40px rgba(59, 130, 246, 0.8)' : (highlighted ? '0 0 40px rgba(59, 130, 246, 0.4)' : (isActuallyAlert ? '0 0 20px rgba(239, 68, 68, 0.3)' : (isNormal ? '0 0 20px rgba(16, 185, 129, 0.2)' : 'inset 0 0 20px rgba(0,0,0,0.8)'))),
           overflow: 'hidden',
-          transition: 'all 0.5s ease',
+          transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
         }}
       >
         {/* Internal Units */}
@@ -856,6 +883,7 @@ const Floor = () => {
   );
 };
 
+// pops up only when user 
 const FloatingHUD = ({ alert = false }: { alert?: boolean }) => {
   const frame = useCurrentFrame();
   const float = Math.sin(frame / 30) * 10;
@@ -864,11 +892,13 @@ const FloatingHUD = ({ alert = false }: { alert?: boolean }) => {
   return (
     <div
       style={{
-        position: 'absolute',
-        transform: `translate3d(-500px, -250px, 100px) rotateY(30deg)`,
+        position: 'fixed',
+        right: 100,
+        top: 50,
         transformStyle: 'preserve-3d',
         pointerEvents: 'none',
-        opacity: alert ? interpolate(Math.sin(frame / 10), [-1, 1], [0.6, 1]) : 0.8,
+        opacity:  1,
+        zIndex: 200,
       }}
     >
       <div
@@ -960,7 +990,19 @@ const Particles = () => {
   );
 };
 
-const ServerRoom = ({ showHUD, systemStatus = 'alert' }: { showHUD: boolean; systemStatus?: 'alert' | 'restarting' | 'normal' }) => {
+const ServerRoom = ({ 
+  showHUD, 
+  systemStatus,
+  onRackHover,
+  onRackClick,
+  hoveredRack
+}: { 
+  showHUD: boolean; 
+  systemStatus: 'alert' | 'restarting' | 'normal';
+  onRackHover: (id: string | null) => void;
+  onRackClick: (id: string) => void;
+  hoveredRack: string | null;
+}) => {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
   
@@ -1059,8 +1101,7 @@ const ServerRoom = ({ showHUD, systemStatus = 'alert' }: { showHUD: boolean; sys
 
         <Cables />
         <Particles />
-        {showHUD && <FloatingHUD alert={isActuallyAlert} />}
-        
+
         {/* Background Wall (Rear) */}
         <div
           style={{
@@ -1101,7 +1142,15 @@ const ServerRoom = ({ showHUD, systemStatus = 'alert' }: { showHUD: boolean; sys
         {/* Row 1 */}
         {[...Array(10)].map((_, i) => (
           <React.Fragment key={`r1-group-${i}`}>
-            <ServerRack x={i - 4} y={-2} highlighted={i === 3} systemStatus={systemStatus} />
+            <ServerRack 
+              x={i - 4} 
+              y={-2} 
+              highlighted={i === 3} 
+              systemStatus={systemStatus}
+              onHover={onRackHover}
+              onClick={onRackClick}
+              isHovered={hoveredRack === `rack_${i - 4}_-2`}
+            />
             {i === 3 && !isActuallyAlert && !isRestarting && <HolographicData x={i - 4} y={-2} title="System Load" value={isNormal ? "42" : "84"} unit="%" color={isNormal ? "#10b981" : "#3b82f6"} />}
           </React.Fragment>
         ))}
@@ -1109,7 +1158,15 @@ const ServerRoom = ({ showHUD, systemStatus = 'alert' }: { showHUD: boolean; sys
         {/* Row 2 */}
         {[...Array(10)].map((_, i) => (
           <React.Fragment key={`r2-group-${i}`}>
-            <ServerRack x={i - 4} y={0} alert={i === 5} systemStatus={systemStatus} />
+            <ServerRack 
+              x={i - 4} 
+              y={0} 
+              alert={i === 5} 
+              systemStatus={systemStatus}
+              onHover={onRackHover}
+              onClick={onRackClick}
+              isHovered={hoveredRack === `rack_${i - 4}_0`}
+            />
             {i === 5 && isActuallyAlert && (
               <HolographicData 
                 x={i - 4} 
@@ -1136,7 +1193,15 @@ const ServerRoom = ({ showHUD, systemStatus = 'alert' }: { showHUD: boolean; sys
         
         {/* Row 3 */}
         {[...Array(10)].map((_, i) => (
-          <ServerRack key={`r3-${i}`} x={i - 4} y={2} systemStatus={systemStatus} />
+          <ServerRack 
+            key={`r3-${i}`} 
+            x={i - 4} 
+            y={2} 
+            systemStatus={systemStatus}
+            onHover={onRackHover}
+            onClick={onRackClick}
+            isHovered={hoveredRack === `rack_${i - 4}_2`}
+          />
         ))}
 
         {/* Dynamic environmental lighting */}
@@ -1391,12 +1456,116 @@ const SciFiAlertPopup = ({ systemStatus, setSystemStatus }: { systemStatus: 'ale
   );
 };
 
+const DeviceInfoPopup = ({ deviceId, onClose }: { deviceId: string; onClose: () => void }) => {
+  const frame = useCurrentFrame();
+  const { fps } = useVideoConfig();
+  
+  const appear = spring({
+    frame,
+    fps,
+    config: { damping: 15 },
+  });
+
+  return (
+    <div
+      style={{
+        position: 'absolute',
+        inset: 0,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        zIndex: 200,
+        background: 'rgba(2, 6, 23, 0.6)',
+        backdropFilter: 'blur(12px)',
+        opacity: appear,
+      }}
+      onClick={onClose}
+    >
+      <div
+        style={{
+          width: '500px',
+          background: 'rgba(15, 23, 42, 0.95)',
+          border: '1px solid rgba(59, 130, 246, 0.3)',
+          borderRadius: '24px',
+          padding: '32px',
+          transform: `scale(${interpolate(appear, [0, 1], [0.9, 1])})`,
+          boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)',
+        }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex justify-between items-start mb-8">
+          <div>
+            <div className="text-blue-400 font-bold text-xs tracking-widest uppercase mb-1">Device Details</div>
+            <h2 className="text-white text-3xl font-black">{deviceId}</h2>
+          </div>
+          <button onClick={onClose} className="text-gray-500 hover:text-white transition-colors">
+            <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+
+        <div className="space-y-6">
+          <div className="grid grid-cols-2 gap-4">
+            <div className="bg-white/5 p-4 rounded-xl border border-white/10">
+              <div className="text-[10px] text-gray-500 font-mono mb-1">STATUS</div>
+              <div className="text-green-400 font-bold flex items-center gap-2">
+                <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse" />
+                OPERATIONAL
+              </div>
+            </div>
+            <div className="bg-white/5 p-4 rounded-xl border border-white/10">
+              <div className="text-[10px] text-gray-500 font-mono mb-1">UPTIME</div>
+              <div className="text-white font-bold">142d 06h 22m</div>
+            </div>
+          </div>
+
+          <div className="space-y-4">
+            <div className="text-xs text-gray-400 font-mono uppercase tracking-widest">Performance Metrics</div>
+            {[
+              { label: 'CPU Usage', value: 24, color: 'bg-blue-500' },
+              { label: 'Memory Usage', value: 62, color: 'bg-purple-500' },
+              { label: 'Network Load', value: 12, color: 'bg-green-500' },
+              { label: 'Disk I/O', value: 8, color: 'bg-orange-500' },
+            ].map((metric) => (
+              <div key={metric.label} className="space-y-2">
+                <div className="flex justify-between text-xs">
+                  <span className="text-gray-400">{metric.label}</span>
+                  <span className="text-white font-bold">{metric.value}%</span>
+                </div>
+                <div className="h-1.5 bg-gray-800 rounded-full overflow-hidden">
+                  <div 
+                    className={`h-full ${metric.color}`}
+                    style={{ width: `${metric.value}%` }}
+                  />
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <div className="pt-4 border-t border-white/5">
+            <div className="text-[10px] text-gray-500 font-mono mb-2 uppercase">System Logs</div>
+            <div className="bg-black/40 p-3 rounded-lg font-mono text-[9px] text-blue-300/60 space-y-1 max-h-24 overflow-y-auto">
+              <div>[11:20:01] INFO: Periodic health check passed</div>
+              <div>[11:15:42] INFO: SSL certificate verified</div>
+              <div>[11:10:12] INFO: Kernel updated to v5.15.0-89</div>
+              <div>[11:05:22] INFO: Firewall rules synchronized</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 export const IoTDashboard = () => {
   const frame = useCurrentFrame();
   const [showHUD, setShowHUD] = useState(false);
   const [systemStatus, setSystemStatus] = useState<'alert' | 'restarting' | 'normal'>('alert');
   const [restartStartTime, setRestartStartTime] = useState<number | null>(null);
   const [statusQueue, setStatusQueue] = useState<('alert' | 'restarting' | 'normal')[]>([]);
+  const [selectedDevice, setSelectedDevice] = useState<string | null>(null);
+  const [hoveredRack, setHoveredRack] = useState<string | null>(null);
   
   const toggleHUD = useCallback(() => {
     setShowHUD((prev) => !prev);
@@ -1451,15 +1620,31 @@ export const IoTDashboard = () => {
         
         <Sidebar />
         <TopBar onToggleHUD={toggleHUD} />
+
+        {showHUD && <FloatingHUD alert={systemStatus === 'alert'} />}
+    
         
         {/* All content should have zIndex: 1, SciFiAlertPopup should have zIndex: 100 */}
         <div style={{ position: 'absolute', inset: 0, zIndex: 1 }}>
           <LeftPanel />
           <RightPanel />
-          <ServerRoom showHUD={showHUD} systemStatus={systemStatus} />
+          <ServerRoom 
+            showHUD={showHUD} 
+            systemStatus={systemStatus}
+            onRackHover={setHoveredRack}
+            onRackClick={setSelectedDevice}
+            hoveredRack={hoveredRack}
+          />
         </div>
         
         <SciFiAlertPopup systemStatus={systemStatus} setSystemStatus={handleSetSystemStatus} />
+        
+        {selectedDevice && (
+          <DeviceInfoPopup 
+            deviceId={selectedDevice} 
+            onClose={() => setSelectedDevice(null)} 
+          />
+        )}
       </div>
     </AbsoluteFill>
   );
