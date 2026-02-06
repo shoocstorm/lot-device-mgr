@@ -85,7 +85,7 @@ const TopBar = ({ onToggleHUD }: { onToggleHUD: () => void }) => {
       }}
     >
       <div className="flex items-center gap-12">
-        <h1 className="text-white text-2xl font-bold">IoT devices</h1>
+        <h1 className="text-white text-2xl font-bold">Devices Management</h1>
         <div className="flex bg-gray-800/50 rounded-full p-1 border border-white/5">
           {['Overview', 'Engine room', 'Internet device', 'Office device', 'Other device'].map((tab, i) => (
             <div
@@ -609,7 +609,7 @@ const Ceiling = () => {
         width: 4000,
         height: 4000,
         background: '#020205',
-        transform: 'translate3d(-2000px, -450px, -2000px) rotateX(90deg)',
+        transform: 'translate3d(-2000px, -800px, -2000px) rotateX(90deg)',
         zIndex: -1,
       }}
     >
@@ -667,7 +667,7 @@ const Cables = () => {
               width: '4px',
               height: '300px',
               background: '#1e293b',
-              transform: `translate3d(${x}px, -400px, ${z}px) rotateZ(${swing}deg)`,
+              transform: `translate3d(${x}px, -750px, ${z}px) rotateZ(${swing}deg)`,
               borderLeft: '1px solid rgba(255,255,255,0.1)',
             }}
           >
@@ -699,7 +699,7 @@ const Floor = () => {
         width: 4000,
         height: 4000,
         background: '#050508',
-        transform: 'translate3d(-2000px, 0, -2000px) rotateX(90deg)',
+        transform: 'translate3d(-2000px, 0, -2000px) rotateX(-90deg)',
         zIndex: -1,
         boxShadow: 'inset 0 0 100px rgba(0,0,0,0.8)',
       }}
@@ -1188,7 +1188,7 @@ const ServerRoom = ({
           transform: `rotateX(${cameraRotateX}deg) rotateY(${cameraRotateY}deg) translate3d(${translateX}px, ${translateY}px, ${cameraZ}px)`,
         }}
       >
-        <Ceiling />
+
         <Floor />
 
         {/* Company Branding - Ceiling Bar */}
@@ -1247,7 +1247,7 @@ const ServerRoom = ({
               height: 20,
               background: '#1e293b',
               border: '1px solid #334155',
-              transform: `translate3d(-2000px, -380px, ${(i - 1) * 400}px)`,
+              transform: `translate3d(-2000px, -450px, ${(i - 1) * 400}px)`,
               boxShadow: '0 10px 20px rgba(0,0,0,0.5)',
             }}
           >
@@ -1269,13 +1269,25 @@ const ServerRoom = ({
           style={{
             position: 'absolute',
             width: 4000,
-            height: 1200,
-            background: isRestarting ? '#000' : 'linear-gradient(to bottom, #020205, #0a0a14)',
-            transform: 'translate3d(-2000px, -600px, -1200px)',
+            height: 800,
+            background: isRestarting ? '#000' : 'linear-gradient(to bottom, #0a0f1e, #02040a)',
+            transform: 'translate3d(-2000px, -400px, -1200px)',
             zIndex: -2,
-            borderBottom: '1px solid rgba(59, 130, 246, 0.2)',
+            borderBottom: '2px solid rgba(59, 130, 246, 0.4)',
+            overflow: 'hidden',
           }}
         >
+          {/* Hexagonal Background Pattern */}
+          <div 
+            style={{
+              position: 'absolute',
+              inset: 0,
+              opacity: isRestarting ? 0 : 0.05,
+              backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M30 0l25.98 15v30L30 60 4.02 45V15z' fill-opacity='0' stroke='%233b82f6' stroke-width='1'/%3E%3C/svg%3E")`,
+              backgroundSize: '60px 60px',
+            }}
+          />
+
           {/* Structural Wall Panels */}
           {[...Array(12)].map((_, i) => (
             <div
@@ -1286,17 +1298,90 @@ const ServerRoom = ({
                 top: 0,
                 bottom: 0,
                 width: '348px',
-                borderRight: '2px solid rgba(0,0,0,0.5)',
-                background: isRestarting ? 'transparent' : 'linear-gradient(90deg, transparent, rgba(255,255,255,0.02))',
+                borderRight: '2px solid rgba(0,0,0,0.8)',
+                background: isRestarting ? 'transparent' : 'linear-gradient(90deg, rgba(15, 23, 42, 0.8), transparent)',
+                boxShadow: 'inset 0 0 50px rgba(0,0,0,0.5)',
               }}
             >
-              {/* Vertical cooling vents on wall */}
-              <div style={{ position: 'absolute', top: '30%', right: '10%', width: '40px', height: '200px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                {[...Array(10)].map((_, j) => (
-                  <div key={j} style={{ width: '100%', height: '2px', background: 'rgba(0,0,0,0.5)' }} />
+              {/* Vertical Glowing Data Line */}
+              {!isRestarting && (
+                <div 
+                  style={{ 
+                    position: 'absolute', 
+                    left: '20px', 
+                    top: 0, 
+                    bottom: 0, 
+                    width: '1px', 
+                    background: 'linear-gradient(to bottom, transparent, rgba(59, 130, 246, 0.5), transparent)',
+                    boxShadow: '0 0 10px rgba(59, 130, 246, 0.3)',
+                  }} 
+                />
+              )}
+
+              {/* Status Indicator Clusters */}
+              <div style={{ position: 'absolute', top: '15%', left: '40px', display: 'flex', gap: '8px' }}>
+                {[...Array(3)].map((_, k) => (
+                  <div 
+                    key={k} 
+                    style={{ 
+                      width: '6px', 
+                      height: '6px', 
+                      borderRadius: '50%', 
+                      background: isRestarting ? '#1e293b' : (isActuallyAlert ? '#ef4444' : (Math.random() > 0.3 ? '#10b981' : '#3b82f6')),
+                      boxShadow: isRestarting ? 'none' : `0 0 8px ${isActuallyAlert ? '#ef4444' : '#3b82f6'}`,
+                      opacity: Math.sin(frame / 10 + i + k) * 0.5 + 0.5,
+                    }} 
+                  />
                 ))}
               </div>
+
+              {/* High-tech cooling vents */}
+              <div style={{ position: 'absolute', top: '40%', right: '20px', width: '60px', height: '250px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                {[...Array(15)].map((_, j) => (
+                  <div 
+                    key={j} 
+                    style={{ 
+                      width: '100%', 
+                      height: '3px', 
+                      background: 'rgba(0,0,0,0.7)',
+                      borderBottom: '1px solid rgba(255,255,255,0.05)',
+                    }} 
+                  />
+                ))}
+              </div>
+
+              {/* Panel Labels */}
+              <div style={{ 
+                position: 'absolute', 
+                bottom: '40px', 
+                left: '40px', 
+                color: 'rgba(59, 130, 246, 0.4)', 
+                fontSize: '10px', 
+                fontFamily: 'monospace',
+                letterSpacing: '2px'
+              }}>
+                SECTOR_{i.toString().padStart(2, '0')}
+              </div>
             </div>
+          ))}
+
+          {/* Large Structural Pillars */}
+          {[...Array(4)].map((_, i) => (
+            <div
+              key={`pillar-${i}`}
+              style={{
+                position: 'absolute',
+                left: i * 1100 - 50,
+                top: 0,
+                bottom: 0,
+                width: '100px',
+                background: 'linear-gradient(90deg, #0f172a, #1e293b, #0f172a)',
+                borderLeft: '1px solid rgba(255,255,255,0.1)',
+                borderRight: '1px solid rgba(255,255,255,0.1)',
+                boxShadow: '0 0 50px rgba(0,0,0,0.9)',
+                zIndex: 1,
+              }}
+            />
           ))}
         </div>
 
