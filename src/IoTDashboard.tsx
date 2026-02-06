@@ -601,55 +601,6 @@ const ServerRack = ({
   );
 };
 
-const Ceiling = () => {
-  return (
-    <div
-      style={{
-        position: 'absolute',
-        width: 4000,
-        height: 4000,
-        background: '#020205',
-        transform: 'translate3d(-2000px, -800px, -2000px) rotateX(90deg)',
-        zIndex: -1,
-      }}
-    >
-      {/* Structural grid lines (Solid) */}
-      {[...Array(20)].map((_, i) => (
-        <React.Fragment key={i}>
-          <div style={{ position: 'absolute', left: i * 200, top: 0, bottom: 0, width: '2px', background: 'rgba(0,0,0,0.5)' }} />
-          <div style={{ position: 'absolute', top: i * 200, left: 0, right: 0, height: '2px', background: 'rgba(0,0,0,0.5)' }} />
-        </React.Fragment>
-      ))}
-      
-      {/* Recessed panels */}
-      <div 
-        style={{
-          position: 'absolute',
-          inset: 0,
-          backgroundImage: 'radial-gradient(rgba(37, 99, 235, 0.03) 1px, transparent 1px)',
-          backgroundSize: '40px 40px',
-        }}
-      />
-
-      {/* Overhead lights - more subtle and professional */}
-      {[...Array(8)].map((_, i) => (
-        <div
-          key={i}
-          style={{
-            position: 'absolute',
-            left: 1000 + i * 300,
-            top: 1000,
-            width: '4px',
-            height: '2000px',
-            background: 'linear-gradient(to bottom, #fbfbfbff, transparent)',
-            boxShadow: '0 0 30px rgba(30, 58, 138, 0.3)',
-            opacity: 1,
-          }}
-        />
-      ))}
-    </div>
-  );
-};
 
 const Cables = () => {
   const frame = useCurrentFrame();
@@ -696,10 +647,10 @@ const Floor = () => {
     <div
       style={{
         position: 'absolute',
-        width: 4000,
-        height: 4000,
+        width: 5000,
+        height: 5000,
         background: '#050508',
-        transform: 'translate3d(-2000px, 0, -2000px) rotateX(-90deg)',
+        transform: 'translate3d(-4000px, 0, -4000px) rotateX(-90deg)',
         zIndex: -1,
         boxShadow: 'inset 0 0 100px rgba(0,0,0,0.8)',
       }}
